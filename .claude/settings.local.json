@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(unzip \"/c/Users/ariel/Downloads/Proyecto Conpat-handoff.zip\" -d ./extracted)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)",
+      "Bash(node -e \"const pkg = require\\('/c/Users/ariel/OneDrive/Documentos/ProyectoConpat/node_modules/react/package.json'\\); console.log\\('React:', pkg.version\\)\")",
+      "Bash(node -e \"const pkg = require\\('/c/Users/ariel/OneDrive/Documentos/ProyectoConpat/node_modules/next/package.json'\\); console.log\\('Next.js:', pkg.version\\)\")",
+      "Bash(node -e \"const r=require\\('./node_modules/react/package.json'\\);console.log\\('React:',r.version\\)\")",
+      "Bash(node -e \"const n=require\\('./node_modules/next/package.json'\\);console.log\\('Next.js:',n.version\\)\")",
+      "Bash(./node_modules/.bin/next lint *)",
+      "Bash(./node_modules/.bin/next --help)",
+      "Bash(node -e \"const pkg = require\\('./node_modules/eslint-config-next/package.json'\\); console.log\\('exports:', JSON.stringify\\(pkg.exports, null, 2\\)\\)\")",
+      "Bash(node *)"
+    ]
+  }
+}

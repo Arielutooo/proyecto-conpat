@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CONPAT — CRM Patrimonial</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body, #root { height: 100%; }
+    body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; color: #0f172a; -webkit-font-smoothing: antialiased; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    .col-span-2 { grid-column: span 2; }
+    input[type=number]::-webkit-inner-spin-button { opacity: 0.5; }
+    select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px !important; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="components/shared.jsx"></script>
+<script type="text/babel" src="components/auth.jsx"></script>
+<script type="text/babel" src="components/admin.jsx"></script>
+<script type="text/babel" src="components/wizard.jsx"></script>
+<script type="text/babel" src="components/admin-client.jsx"></script>
+<script type="text/babel" src="components/cfo.jsx"></script>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "accentColor": "oklch(0.55 0.18 245)",
+  "sidebarBg": "#0d1117",
+  "density": "normal"
+}/*EDITMODE-END*/;
+
+function App() {
+  const [tweaks, setTweaks] = useState(TWEAK_DEFAULTS);
+  const [tweakOpen, setTweakOpen] = useState(false);
+  const [role, setRole] = useState(null);
+  const [userName, setUserName] = useState('');
+  const [view, setView] = useState('dashboard');
+  const [selectedCliente, setSelectedCliente] = useState(null);
+  const [clientes, setClientes] = useState(MOCK_CLIENTES);
+
+  // Tweaks protocol
+  useEffect(() => {
+    window.addEventListener('message', e => {
+      if (e.data?.type === '__activate_edit_mode') setTweakOpen(true);
+      if (e.data?.type === '__deactivate_edit_mode') setTweakOpen(false);
+    });
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+  }, []);
+
+  const applyTweak = (key, val) => {
+    const next = { ...tweaks, [key]: val };
+    setTweaks(next);
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits: next }, '*');
+  };
+
+  const handleLogin = (r, name) => {
+    setRole(r);
+    setUserName(name);
+    setView(r === 'admin' ? 'admin-dashboard' : 'cfo-dashboard');
+  };
+
+  const handleUpdateCliente = (updated) => {
+    setClientes(prev => prev.map(c => c.id === updated.id ? updated : c));
+    if (selectedCliente?.id === updated.id) setSelectedCliente(updated);
+  };
+
+  const handleNewCliente = (newC) => {
+    setClientes(prev => [...prev, newC]);
+    setView('admin-dashboard');
+  };
+
+  const navigate = (v) => {
+    setView(v);
+    setSelectedCliente(null);
+  };
+
+  const appCtx = { setView, setRole, tweaks, userName };
+
+  if (!role) return (
+    <AppContext.Provider value={appCtx}>
+      <LoginPage onLogin={handleLogin} />
+    </AppContext.Provider>
+  );
+
+  return (
+    <AppContext.Provider value={appCtx}>
+      <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+        <Sidebar
+          role={role}
+          view={view}
+          onNavigate={navigate}
+          userName={userName}
+        />
+
+        <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#f1f5f9' }}>
+          {/* Admin views */}
+          {role === 'admin' && view === 'admin-dashboard' && (
+            <AdminDashboard
+              clientes={clientes}
+              onSelectCliente={c => { setSelectedCliente(c); setView('admin-client'); }}
+              onNewCliente={() => setView('admin-wizard')}
+            />
+          )}
+          {role === 'admin' && view === 'admin-wizard' && (
+            <OnboardingWizard
+              onFinish={handleNewCliente}
+              onCancel={() => setView('admin-dashboard')}
+            />
+          )}
+          {role === 'admin' && view === 'admin-client' && selectedCliente && (
+            <AdminClientPanel
+              cliente={selectedCliente}
+              onBack={() => setView('admin-dashboard')}
+              onUpdate={handleUpdateCliente}
+            />
+          )}
+
+          {/* CFO views */}
+          {role === 'cfo_externo' && view === 'cfo-dashboard' && (
+            <CFODashboard
+              clientes={clientes}
+              onSelectCliente={c => { setSelectedCliente(c); setView('cfo-client'); }}
+            />
+          )}
+          {role === 'cfo_externo' && view === 'cfo-client' && selectedCliente && (
+            <CFOClientView
+              cliente={selectedCliente}
+              onBack={() => setView('cfo-dashboard')}
+              onUpdate={handleUpdateCliente}
+            />
+          )}
+        </main>
+
+        {/* Tweaks Panel */}
+        {tweakOpen && (
+          <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 200, background: 'white', border: '1px solid #e5e8ef', borderRadius: 16, width: 280, boxShadow: '0 8px 32px rgba(0,0,0,0.12)', overflow: 'hidden' }}>
+            <div style={{ padding: '14px 18px', background: '#0d1117', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ color: 'white', fontSize: 13, fontWeight: 600 }}>Tweaks</span>
+              <button onClick={() => setTweakOpen(false)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: 16 }}>×</button>
+            </div>
+            <div style={{ padding: 16 }}>
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', display: 'block', marginBottom: 8 }}>Color de Acento</label>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {[
+                    { label: 'Azul', val: 'oklch(0.55 0.18 245)' },
+                    { label: 'Esmeralda', val: 'oklch(0.55 0.18 160)' },
+                    { label: 'Violeta', val: 'oklch(0.55 0.18 295)' },
+                    { label: 'Ámbar', val: 'oklch(0.62 0.16 65)' },
+                  ].map(opt => (
+                    <button key={opt.label} onClick={() => applyTweak('accentColor', opt.val)}
+                      style={{ padding: '5px 10px', borderRadius: 20, border: `1.5px solid ${tweaks.accentColor === opt.val ? opt.val : '#e5e8ef'}`, background: tweaks.accentColor === opt.val ? opt.val + '15' : 'white', fontSize: 11, cursor: 'pointer', color: '#374151', fontWeight: tweaks.accentColor === opt.val ? 700 : 400 }}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', display: 'block', marginBottom: 8 }}>Fondo del Sidebar</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  {[
+                    { label: 'Negro', val: '#0d1117' },
+                    { label: 'Navy', val: '#0f1b35' },
+                    { label: 'Pizarra', val: '#1e293b' },
+                  ].map(opt => (
+                    <button key={opt.label} onClick={() => applyTweak('sidebarBg', opt.val)}
+                      style={{ width: 28, height: 28, borderRadius: 6, background: opt.val, border: `2px solid ${tweaks.sidebarBg === opt.val ? '#94a3b8' : 'transparent'}`, cursor: 'pointer' }} title={opt.label} />
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label style={{ fontSize: 11, fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.07em', display: 'block', marginBottom: 8 }}>Portal activo</label>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button onClick={() => { setRole('admin'); setView('admin-dashboard'); setSelectedCliente(null); }}
+                    style={{ flex: 1, padding: '7px 0', borderRadius: 8, border: `1.5px solid ${role === 'admin' ? 'oklch(0.55 0.18 245)' : '#e5e8ef'}`, background: role === 'admin' ? 'oklch(0.97 0.04 245)' : 'white', fontSize: 11, cursor: 'pointer', fontWeight: role === 'admin' ? 700 : 400, color: role === 'admin' ? 'oklch(0.35 0.18 245)' : '#64748b' }}>
+                    Admin
+                  </button>
+                  <button onClick={() => { setRole('cfo_externo'); setView('cfo-dashboard'); setSelectedCliente(null); }}
+                    style={{ flex: 1, padding: '7px 0', borderRadius: 8, border: `1.5px solid ${role === 'cfo_externo' ? 'oklch(0.55 0.18 145)' : '#e5e8ef'}`, background: role === 'cfo_externo' ? 'oklch(0.97 0.04 145)' : 'white', fontSize: 11, cursor: 'pointer', fontWeight: role === 'cfo_externo' ? 700 : 400, color: role === 'cfo_externo' ? 'oklch(0.35 0.18 145)' : '#64748b' }}>
+                    CFO
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </AppContext.Provider>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
