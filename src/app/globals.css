@@ -8,12 +8,12 @@
   padding: 0;
 }
 
-html, body, #__next {
+html, body {
   height: 100%;
 }
 
 body {
-  font-family: 'DM Sans', sans-serif;
+  font-family: var(--font-dm-sans, 'DM Sans', sans-serif);
   background: #f1f5f9;
   color: #0f172a;
   -webkit-font-smoothing: antialiased;
@@ -33,6 +33,7 @@ body {
   border-radius: 3px;
 }
 
+/* Animaciones */
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
@@ -42,13 +43,21 @@ body {
   animation: slideUp 0.2s ease forwards;
 }
 
+@keyframes slideInRight {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.25s cubic-bezier(0.16,1,0.3,1) forwards;
+}
+
+/* Ocultar spinners en inputs numéricos */
 input[type=number]::-webkit-inner-spin-button {
   opacity: 0.5;
 }
 
-select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  padding-right: 30px !important;
+/* Radix UI — eliminar outline en focus visible de items */
+[data-radix-popper-content-wrapper] {
+  z-index: 50 !important;
 }
