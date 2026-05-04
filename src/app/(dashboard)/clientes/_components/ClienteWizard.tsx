@@ -21,7 +21,7 @@ const INITIAL = {
   tiene_nomina: false, emite_facturas: false, boletas_honorarios: false,
 }
 
-const inputCls = 'w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500'
+const inputCls = 'w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-[oklch(0.55_0.18_245)]'
 const selectCls = inputCls + ' bg-white'
 
 function WizardField({ label, children }: { label: string; children: React.ReactNode }) {
@@ -180,7 +180,7 @@ export function ClienteWizard({ open, onClose }: Props) {
               <button
                 onClick={() => setStep((step + 1) as Step)}
                 disabled={step === 1 && (!form.razon_social || !form.rut)}
-                className="flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
+                className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:opacity-85 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-opacity"
               >
                 Siguiente <ChevronRight size={14} />
               </button>
@@ -188,7 +188,7 @@ export function ClienteWizard({ open, onClose }: Props) {
               <button
                 onClick={handleFinish}
                 disabled={isPending}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-colors"
+                className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:opacity-85 disabled:opacity-60 text-white text-sm font-semibold rounded-lg transition-opacity"
               >
                 {isPending && <Loader2 size={13} className="animate-spin" />}
                 Crear Cliente

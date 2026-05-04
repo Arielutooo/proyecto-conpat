@@ -3,24 +3,29 @@
 import { useState, useTransition } from 'react'
 import { formatCLP, formatUSD, TIPO_CAMBIO_USD_CLP, TIPO_INVERSION_LABELS } from '@/lib/helpers'
 import { updateCliente } from '@/lib/actions/clientes'
-import type { ClienteConRelaciones, Inversion, Role } from '@/lib/types'
+import { Calendar, Check, TrendingUp } from 'lucide-react'
+import type { ClienteConRelaciones, Role } from '@/lib/types'
 
 interface Props {
   cliente: ClienteConRelaciones
   role: Role
+  anioFiscal: number
 }
 
-function KPICard({ label, value, sub }: { label: string; value: string; sub?: string }) {
+function KPICard({ label, value, sub, icon: Icon }: { label: string; value: string; sub?: string; icon?: any }) {
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-4">
-      <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">{label}</p>
-      <p className="text-2xl font-bold text-slate-900 mt-1">{value}</p>
-      {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
+    <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
+      <div className="flex justify-between items-start mb-2">
+        <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest">{label}</p>
+        {Icon && <Icon size={16} className="text-slate-400" />}
+      </div>
+      <p className="text-2xl font-bold text-slate-900">{value}</p>
+      {sub && <p className="text-[12px] text-slate-400 mt-1 font-medium">{sub}</p>}
     </div>
   )
 }
 
-export function TabInversiones({ cliente, role }: Props) {
+export function TabInversiones({ cliente, role, anioFiscal }: Props) {
   const [sinInv, setSinInv] = useState(cliente.sin_inversiones)
   const [, startTransition] = useTransition()
   const canEdit = role === 'admin'
@@ -31,7 +36,6 @@ export function TabInversiones({ cliente, role }: Props) {
 
   const totalClp = financieras.reduce((s, i) => s + i.saldo_clp + i.saldo_usd * TIPO_CAMBIO_USD_CLP, 0)
   const totalUsd = financieras.reduce((s, i) => s + i.saldo_usd + i.saldo_clp / TIPO_CAMBIO_USD_CLP, 0)
-  const totalUfInmob = inmobiliarias.reduce((s, i) => s + (i.valor_uf ?? 0) * i.cantidad, 0)
 
   const toggleSinInversiones = () => {
     const next = !sinInv
@@ -42,141 +46,147 @@ export function TabInversiones({ cliente, role }: Props) {
   }
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-8 max-w-5xl">
       {/* Toggle sin inversiones */}
-      <div
-        onClick={canEdit ? toggleSinInversiones : undefined}
-        className={`flex items-center gap-4 p-4 rounded-xl border-2 transition-colors ${canEdit ? 'cursor-pointer' : ''} ${sinInv ? 'border-blue-500 bg-blue-50' : 'border-slate-200 bg-white'}`}
-      >
-        <div className={`w-10 h-6 rounded-full transition-colors relative ${sinInv ? 'bg-blue-600' : 'bg-slate-300'}`}>
-          <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all ${sinInv ? 'left-5' : 'left-1'}`} />
-        </div>
+      <div className="bg-white rounded-xl border border-slate-200 p-5 flex items-center justify-between shadow-sm">
         <div>
-          <p className="text-sm font-semibold text-slate-800">Cliente sin inversiones</p>
-          <p className="text-xs text-slate-400">Deshabilita el módulo de inversiones</p>
+          <h3 className="font-bold text-[14px] text-slate-900">Cliente sin inversiones</h3>
+          <p className="text-[12px] text-slate-500 mt-0.5">Oculta y deshabilita el módulo de inversiones</p>
+        </div>
+        <div 
+          onClick={canEdit ? toggleSinInversiones : undefined}
+          className={`w-12 h-7 rounded-full relative transition-colors ${canEdit ? 'cursor-pointer' : ''} ${sinInv ? 'bg-blue-600' : 'bg-slate-200'}`}
+        >
+          <div className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all shadow ${sinInv ? 'left-6' : 'left-1'}`} />
         </div>
       </div>
 
       {!sinInv && (
         <>
-          {/* KPIs AUM */}
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            <KPICard label="AUM Financiero (CLP)" value={formatCLP(totalClp)} sub={`≈ ${formatUSD(totalUsd)}`} />
-            <KPICard label="AUM Inmobiliario (UF)" value={`UF ${totalUfInmob.toLocaleString('es-CL')}`} />
-            <KPICard label="Tipo de Cambio" value={`$${TIPO_CAMBIO_USD_CLP.toLocaleString('es-CL')}`} sub="CLP por USD (referencial)" />
+          {/* KPIs */}
+          <div className="grid grid-cols-2 gap-4">
+            <KPICard 
+              label="Apertura de Año" 
+              value={`01/01/${anioFiscal}`} 
+              sub="Inicio del ejercicio fiscal" 
+              icon={Calendar} 
+            />
+            <KPICard 
+              label="Cierre de Año" 
+              value={`31/12/${anioFiscal}`} 
+              sub="Cierre del ejercicio fiscal" 
+              icon={Check} 
+            />
+            <KPICard 
+              label={`AUM Total ${anioFiscal}`} 
+              value={`$${(totalClp / 1000000).toFixed(1)}M CLP`} 
+              sub={formatUSD(totalUsd)} 
+              icon={TrendingUp} 
+            />
+            <KPICard 
+              label="Fecha de Valoración" 
+              value={`31/12/${anioFiscal}`} 
+              sub={`Cierre ejercicio ${anioFiscal}`} 
+              icon={Calendar} 
+            />
           </div>
 
           {/* Panel Financieras */}
-          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-            <div className="px-4 py-3 border-b border-slate-100">
-              <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Inversiones Financieras</h3>
-              <p className="text-xs text-slate-400 mt-0.5">FFMM, Acciones, Depósitos a plazo</p>
-            </div>
-            {financieras.length === 0 ? (
-              <div className="py-10 text-center text-sm text-slate-400">Sin inversiones financieras</div>
-            ) : (
+          <div>
+            <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4">
+              Panel 1 — Financieras (FFMM y Acciones)
+            </h3>
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
               <table className="w-full text-sm">
-                <thead className="bg-slate-50">
+                <thead className="bg-white border-b border-slate-100">
                   <tr>
-                    <th className="text-left px-4 py-2.5 text-xs font-semibold text-slate-500">Tipo</th>
-                    <th className="text-left px-4 py-2.5 text-xs font-semibold text-slate-500 hidden md:table-cell">Descripción</th>
-                    <th className="text-right px-4 py-2.5 text-xs font-semibold text-slate-500">Saldo CLP</th>
-                    <th className="text-right px-4 py-2.5 text-xs font-semibold text-slate-500">Saldo USD</th>
-                    <th className="text-right px-4 py-2.5 text-xs font-semibold text-slate-500 hidden lg:table-cell">Equiv. CLP</th>
+                    <th className="text-left px-5 py-4 text-[11px] font-bold text-slate-500 tracking-widest uppercase">Institución</th>
+                    <th className="text-left px-5 py-4 text-[11px] font-bold text-slate-500 tracking-widest uppercase">Tipo</th>
+                    <th className="text-center px-5 py-4 text-[11px] font-bold text-slate-500 tracking-widest uppercase">Año Apertura</th>
+                    <th className="text-right px-5 py-4 text-[11px] font-bold text-slate-500 tracking-widest uppercase">Saldo Inicial</th>
+                    <th className="text-center px-5 py-4 text-[11px] font-bold text-slate-500 tracking-widest uppercase">Año Cierre</th>
+                    <th className="text-right px-5 py-4 text-[11px] font-bold text-slate-500 tracking-widest uppercase">Saldo Final</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {financieras.map(inv => {
+                <tbody className="divide-y divide-slate-100">
+                  {financieras.length === 0 ? (
+                     <tr><td colSpan={6} className="py-8 text-center text-slate-400 text-sm">No hay inversiones financieras registradas.</td></tr>
+                  ) : financieras.map(inv => {
                     const equivClp = inv.saldo_clp + inv.saldo_usd * TIPO_CAMBIO_USD_CLP
+                    const equivUsd = inv.saldo_usd + inv.saldo_clp / TIPO_CAMBIO_USD_CLP
+                    const isPositive = equivClp > 0 // Simplificación visual para el mockup
+
                     return (
-                      <tr key={inv.id} className="hover:bg-slate-50">
-                        <td className="px-4 py-3">
-                          <span className="text-xs font-semibold bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">
+                      <tr key={inv.id} className="hover:bg-slate-50/50">
+                        <td className="px-5 py-4 font-semibold text-slate-900 text-[13px]">
+                          {inv.descripcion || '—'}
+                        </td>
+                        <td className="px-5 py-4">
+                          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${inv.tipo_inversion === 'Acciones' ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600'}`}>
                             {TIPO_INVERSION_LABELS[inv.tipo_inversion] ?? inv.tipo_inversion}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-slate-500 text-xs hidden md:table-cell">{inv.descripcion ?? '—'}</td>
-                        <td className="px-4 py-3 text-right font-medium text-slate-800">
-                          {inv.saldo_clp > 0 ? formatCLP(inv.saldo_clp) : '—'}
+                        <td className="px-5 py-4 text-center text-slate-400 text-[13px]">
+                           {anioFiscal - 1}
                         </td>
-                        <td className="px-4 py-3 text-right font-medium text-slate-800">
-                          {inv.saldo_usd > 0 ? formatUSD(inv.saldo_usd) : '—'}
+                        <td className="px-5 py-4 text-right">
+                          <div className="font-semibold text-slate-900 text-[13px]">{formatCLP(inv.saldo_clp)}</div>
+                          <div className="text-[11px] text-slate-400 mt-0.5">{formatUSD(inv.saldo_usd)}</div>
                         </td>
-                        <td className="px-4 py-3 text-right text-slate-600 text-xs hidden lg:table-cell">
-                          {formatCLP(equivClp)}
+                        <td className="px-5 py-4 text-center text-slate-400 text-[13px]">
+                           {anioFiscal}
+                        </td>
+                        <td className="px-5 py-4 text-right">
+                          <div className={`font-semibold text-[13px] ${isPositive ? 'text-[#059669]' : 'text-slate-900'}`}>{formatCLP(equivClp)}</div>
+                          <div className="text-[11px] text-slate-400 mt-0.5">{formatUSD(equivUsd)}</div>
                         </td>
                       </tr>
                     )
                   })}
                 </tbody>
-                <tfoot className="border-t border-slate-200">
-                  <tr className="bg-slate-50">
-                    <td colSpan={2} className="px-4 py-3 text-xs font-semibold text-slate-500">Total</td>
-                    <td className="px-4 py-3 text-right text-sm font-bold text-slate-900">
-                      {formatCLP(financieras.reduce((s, i) => s + i.saldo_clp, 0))}
-                    </td>
-                    <td className="px-4 py-3 text-right text-sm font-bold text-slate-900">
-                      {formatUSD(financieras.reduce((s, i) => s + i.saldo_usd, 0))}
-                    </td>
-                    <td className="px-4 py-3 text-right text-xs font-bold text-blue-700 hidden lg:table-cell">
-                      {formatCLP(totalClp)}
-                    </td>
-                  </tr>
-                </tfoot>
               </table>
-            )}
+            </div>
           </div>
 
-          {/* Panel Inmobiliaria — solo lectura */}
-          <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-            <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
-              <div>
-                <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Inversiones Inmobiliarias</h3>
-                <p className="text-xs text-slate-400 mt-0.5">Vista de solo lectura — actualizar desde CRM</p>
-              </div>
-              <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md font-medium">Solo lectura</span>
-            </div>
+          {/* Panel Inmobiliaria */}
+          <div>
+             <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4">
+              Panel 2 — Inmobiliaria (Solo Lectura)
+            </h3>
             {inmobiliarias.length === 0 ? (
-              <div className="py-10 text-center text-sm text-slate-400">Sin inversiones inmobiliarias</div>
+              <div className="bg-white rounded-xl border border-slate-200 p-8 text-center text-slate-400 text-sm shadow-sm">
+                No hay inversiones inmobiliarias registradas.
+              </div>
             ) : (
-              <table className="w-full text-sm">
-                <thead className="bg-slate-50">
-                  <tr>
-                    <th className="text-left px-4 py-2.5 text-xs font-semibold text-slate-500">Tipo</th>
-                    <th className="text-left px-4 py-2.5 text-xs font-semibold text-slate-500 hidden md:table-cell">Descripción</th>
-                    <th className="text-right px-4 py-2.5 text-xs font-semibold text-slate-500">Cant.</th>
-                    <th className="text-center px-4 py-2.5 text-xs font-semibold text-slate-500">Propia</th>
-                    <th className="text-right px-4 py-2.5 text-xs font-semibold text-slate-500">Valor UF</th>
-                    <th className="text-center px-4 py-2.5 text-xs font-semibold text-slate-500">DFL2</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {inmobiliarias.map(inv => (
-                    <tr key={inv.id} className="hover:bg-slate-50">
-                      <td className="px-4 py-3">
-                        <span className="text-xs font-semibold bg-amber-50 text-amber-700 px-2 py-0.5 rounded-md">
-                          {TIPO_INVERSION_LABELS[inv.tipo_inversion] ?? inv.tipo_inversion}
+              <div className="grid grid-cols-2 gap-4">
+                {inmobiliarias.map(inv => (
+                  <div key={inv.id} className="bg-white rounded-xl border border-slate-200 p-6 shadow-sm">
+                    <h4 className="font-bold text-slate-900 text-[15px] mb-6">{inv.descripcion || TIPO_INVERSION_LABELS[inv.tipo_inversion] || inv.tipo_inversion}</h4>
+                    <div className="space-y-4 text-[13px]">
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-500 font-medium">Cantidad de inmuebles</span>
+                        <span className="font-bold text-slate-900">{inv.cantidad}</span>
+                      </div>
+                      <div className="flex justify-between items-center pt-4 border-t border-slate-100">
+                        <span className="text-slate-500 font-medium">Valorización</span>
+                        <span className="font-bold text-slate-900">{inv.valor_uf ? `${inv.valor_uf.toLocaleString('es-CL')} UF` : '—'}</span>
+                      </div>
+                      <div className="flex justify-between items-center pt-4 border-t border-slate-100">
+                        <span className="text-slate-500 font-medium">Propiedad propia</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${inv.es_propia ? 'bg-green-50 text-[#059669]' : 'bg-slate-100 text-slate-400'}`}>
+                          {inv.es_propia ? '• Sí' : '• No'}
                         </span>
-                      </td>
-                      <td className="px-4 py-3 text-slate-500 text-xs hidden md:table-cell">{inv.descripcion ?? '—'}</td>
-                      <td className="px-4 py-3 text-right font-medium text-slate-800">{inv.cantidad}</td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={`text-xs font-semibold ${inv.es_propia ? 'text-green-600' : 'text-slate-400'}`}>
-                          {inv.es_propia ? 'Sí' : 'No'}
+                      </div>
+                      <div className="flex justify-between items-center pt-4 border-t border-slate-100">
+                        <span className="text-slate-500 font-medium">Acoge DFL2</span>
+                        <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${inv.tiene_dfl2 ? 'bg-green-50 text-[#059669]' : 'bg-slate-100 text-slate-400'}`}>
+                          {inv.tiene_dfl2 ? '• Sí' : '• No'}
                         </span>
-                      </td>
-                      <td className="px-4 py-3 text-right font-medium text-slate-800">
-                        {inv.valor_uf != null ? `UF ${inv.valor_uf.toLocaleString('es-CL')}` : '—'}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <span className={`text-xs font-semibold ${inv.tiene_dfl2 ? 'text-blue-600' : 'text-slate-400'}`}>
-                          {inv.tiene_dfl2 ? 'Sí' : 'No'}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </>

@@ -31,25 +31,30 @@ export const TIPO_INVERSION_LABELS: Record<string, string> = {
 }
 
 export const DOCS_LEGALES = [
-  { key: 'escritura',      label: 'Escritura Social',          obligatorio: true  },
-  { key: 'constitucion',   label: 'Constitución',              obligatorio: true  },
-  { key: 'extracto',       label: 'Extracto C.B.',             obligatorio: true  },
+  { key: 'constitucion',   label: 'Constitución de Sociedad',  obligatorio: true  },
+  { key: 'extracto',       label: 'Extracto',                  obligatorio: true  },
+  { key: 'protocolizacion',label: 'Protocolización',           obligatorio: true  },
   { key: 'patente',        label: 'Patente Comercial',         obligatorio: false },
-  { key: 'modificaciones', label: 'Modificaciones de Acta',    obligatorio: false },
-  { key: 'cedulas',        label: 'Cédulas Representante',     obligatorio: false },
-  { key: 'poderes',        label: 'Poderes Notariales',        obligatorio: false },
+  { key: 'modificaciones', label: 'Modificaciones de Sociedad',obligatorio: false },
+  { key: 'cedulas',        label: 'Cédulas de Socios',         obligatorio: false },
+  { key: 'poderes',        label: 'Poderes',                   obligatorio: false },
 ]
 
 export const DOCS_TRIBUTARIOS = [
-  { key: 'balance',         label: 'Balance Tributario' },
-  { key: 'rli',             label: 'Renta Líquida Imponible (RLI)' },
-  { key: 'capital_propio',  label: 'Capital Propio Tributario' },
-  { key: 'libro_mayor',     label: 'Libro Mayor' },
+  { key: 'balance',                 label: 'Balance Tributario' },
+  { key: 'rli',                     label: 'Renta Líquida Imponible (RLI)' },
+  { key: 'capital_propio',          label: 'Capital Propio Tributario' },
+  { key: 'libro_mayor',             label: 'Libro Mayor' },
+  { key: 'registros_empresariales', label: 'Registros Empresariales' },
+  { key: 'f22',                     label: 'Formulario 22 (F22)' },
+  { key: 'declaraciones_juradas',   label: 'Declaraciones Juradas' },
 ]
 
 export const DOCS_RRHH = [
   { key: 'contratos',      label: 'Contratos de Trabajo' },
   { key: 'liquidaciones',  label: 'Liquidaciones de Sueldo' },
+  { key: 'vacaciones',     label: 'Certificados de Vacaciones' },
+  { key: 'licencias',      label: 'Licencias Médicas' },
 ]
 
 export const TIPO_ENTREGABLE_OPTIONS = [

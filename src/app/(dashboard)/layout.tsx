@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { AnoFiscalProvider } from '@/lib/contexts/ano-fiscal'
 import { Sidebar } from './_components/Sidebar'
-import { TopBar } from './_components/TopBar'
 import type { Role } from '@/lib/types'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -17,19 +16,16 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .eq('user_id', user.id)
     .single()
 
-  const role = (roleRow?.role ?? 'cfo_externo') as Role
+  const role     = (roleRow?.role ?? 'cfo_externo') as Role
   const userName = (user.user_metadata?.name as string | undefined) ?? user.email ?? 'Usuario'
 
   return (
     <AnoFiscalProvider>
-      <div className="flex h-screen overflow-hidden bg-slate-50">
-        <Sidebar role={role} />
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-          <TopBar userName={userName} userEmail={user.email ?? ''} role={role} />
-          <main className="flex-1 overflow-auto">
-            {children}
-          </main>
-        </div>
+      <div className="flex h-screen overflow-hidden" style={{ background: '#f1f5f9' }}>
+        <Sidebar role={role} userName={userName} />
+        <main className="flex-1 min-w-0 overflow-auto">
+          {children}
+        </main>
       </div>
     </AnoFiscalProvider>
   )

@@ -115,3 +115,10 @@ export interface ClienteConRelaciones extends Cliente {
   documentos: Documento[]
   entregables: EntregableCFO[]
 }
+
+export interface ClienteConStats extends Cliente {
+  socios_count: number
+  inversiones_count: number
+  retiros_mes: number
+  entregables_count: number
+}

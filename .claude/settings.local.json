@@ -12,7 +12,9 @@
       "Bash(./node_modules/.bin/next lint *)",
       "Bash(./node_modules/.bin/next --help)",
       "Bash(node -e \"const pkg = require\\('./node_modules/eslint-config-next/package.json'\\); console.log\\('exports:', JSON.stringify\\(pkg.exports, null, 2\\)\\)\")",
-      "Bash(node *)"
+      "Bash(node *)",
+      "Bash(npx tsc *)",
+      "Bash(npx next *)"
     ]
   }
 }

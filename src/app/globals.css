@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --brand:         oklch(0.55 0.18 245);
+  --brand-light:   oklch(0.97 0.04 245);
+  --brand-dark:    oklch(0.35 0.18 245);
+  --brand-glow:    oklch(0.55 0.18 245 / 0.35);
+  --sidebar-bg:    #0d1117;
+  --border:        #e5e8ef;
+  --text-primary:  #0f172a;
+  --text-muted:    #94a3b8;
+  --text-secondary:#64748b;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;

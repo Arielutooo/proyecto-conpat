@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getClienteConRelaciones } from '@/lib/queries/clientes'
 import { ClienteDetail } from './_components/ClienteDetail'
+import { CFOClientView } from './_components/CFOClientView'
 import type { Role } from '@/lib/types'
 
 interface Props {
@@ -23,6 +24,10 @@ export default async function ClientePage({ params }: Props) {
   const cliente = await getClienteConRelaciones(id)
 
   if (!cliente) notFound()
+
+  if (role === 'cfo_externo') {
+    return <CFOClientView cliente={cliente} />
+  }
 
   return <ClienteDetail cliente={cliente} role={role} />
 }

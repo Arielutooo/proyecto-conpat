@@ -97,7 +97,7 @@ export function TabCartolas({ cliente, role, anioFiscal }: Props) {
           <button
             onClick={() => fileRef.current?.click()}
             disabled={uploading || !banco || !mes}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-slate-900 hover:opacity-85 disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-opacity"
           >
             {uploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
             {uploading ? 'Subiendo...' : 'Seleccionar Archivo'}

@@ -144,7 +144,7 @@ export function TabSocios({ cliente, role, anioFiscal }: Props) {
               <button
                 onClick={handleAddSocio}
                 disabled={!newSocio.nombre}
-                className="px-3 py-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-lg transition-colors"
+                className="px-3 py-1.5 text-xs font-semibold bg-slate-900 hover:opacity-85 disabled:opacity-50 text-white rounded-lg transition-opacity"
               >
                 Agregar
               </button>

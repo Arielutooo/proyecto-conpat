@@ -13,7 +13,7 @@ interface Props {
   onClose: () => void
 }
 
-const inputCls = 'w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500'
+const inputCls  = 'w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:border-[oklch(0.55_0.18_245)]'
 const selectCls = inputCls
 
 const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
@@ -164,7 +164,7 @@ export function EditarFichaDrawer({ cliente, open, onClose }: Props) {
             <button
               onClick={handleSave}
               disabled={isPending}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-colors"
+              className="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:opacity-85 disabled:opacity-60 text-white text-sm font-semibold rounded-xl transition-opacity"
             >
               {isPending && <Loader2 size={13} className="animate-spin" />}
               Guardar Cambios
