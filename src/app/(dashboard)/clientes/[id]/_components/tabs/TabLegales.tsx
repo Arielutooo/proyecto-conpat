@@ -96,9 +96,13 @@ export function TabLegales({ cliente, role, anioFiscal }: Props) {
           <Row label="Nómina"                   value={<Pill ok={cliente.tiene_nomina} />} />
           <Row label="Emisión de Facturas"      value={<Pill ok={cliente.emite_facturas} />} />
           <Row label="Boletas de Honorarios"    value={<Pill ok={cliente.boletas_honorarios} />} />
+          <Row label="Iniciación de Actividades"value={<Pill ok={cliente.iniciacion_actividades} />} />
+          <Row label="Actividad Económica"      value={cliente.actividad_economica} />
+          <Row label="Código SII"               value={cliente.codigo_sii} />
+          <Row label="Rentas Presuntas"         value={<Pill ok={cliente.rentas_presuntas} />} />
         </div>
 
-        {(cliente.conpat_factura || canEdit) && (
+        {canEdit && (
           <div style={{ background: 'white', borderRadius: 12, border: '1px solid #e5e8ef', padding: '20px 24px' }}>
             <SectionTitle>Facturación Interna Conpat</SectionTitle>
             <Row label="Conpat le factura" value={<Pill ok={cliente.conpat_factura} />} />

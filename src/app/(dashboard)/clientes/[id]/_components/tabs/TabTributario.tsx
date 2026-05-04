@@ -2,10 +2,11 @@
 
 import { useState, useTransition, useRef } from 'react'
 import { Upload, Loader2, FileText, Trash2, Eye, CheckCircle2 } from 'lucide-react'
-import { createDocumento, deleteDocumento } from '@/lib/actions/documentos'
+import { createDocumento, deleteDocumento, createEntregableCFO, deleteEntregableCFO } from '@/lib/actions/documentos'
 import { createClient } from '@/lib/supabase/client'
-import { DOCS_TRIBUTARIOS, MESES } from '@/lib/helpers'
-import type { ClienteConRelaciones, Documento, Role } from '@/lib/types'
+import { createCertificado, deleteCertificado } from '@/lib/actions/certificados'
+import { DOCS_TRIBUTARIOS, MESES, getInitials, TIPO_ENTREGABLE_OPTIONS } from '@/lib/helpers'
+import type { ClienteConRelaciones, Documento, Role, CertificadoRetiroAnual, EntregableCFO } from '@/lib/types'
 
 interface Props {
   cliente: ClienteConRelaciones
@@ -21,14 +22,27 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
   )
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null)
   const [uploadingF29, setUploadingF29] = useState<string | null>(null)
+  const [uploadingCert, setUploadingCert] = useState<string | null>(null)
+  const [uploadingEntregable, setUploadingEntregable] = useState(false)
   const [selectedMesIdx, setSelectedMesIdx] = useState(0) // Mes seleccionado para F29
+  const [tipoEntregable, setTipoEntregable] = useState('')
+  
+  const [entregables, setEntregables] = useState<EntregableCFO[]>(
+    cliente.entregables || []
+  )
+  
+  const [certificados, setCertificados] = useState<CertificadoRetiroAnual[]>(
+    cliente.socios.flatMap(s => s.certificados || [])
+  )
   
   const [, startTransition] = useTransition()
   const docInputRef = useRef<HTMLInputElement>(null)
   const f29InputRef = useRef<HTMLInputElement>(null)
+  const certInputRef = useRef<HTMLInputElement>(null)
+  const entregableRef = useRef<HTMLInputElement>(null)
   const pendingDocKey = useRef<string | null>(null)
-  
-  const canEdit = role === 'admin'
+  const pendingSocioId = useRef<string | null>(null)
+  const canEdit = role === 'admin' || role === 'cfo_externo'
 
   const getDoc = (tipo: string) => docs.find(d => d.tipo_documento === tipo && d.anio === anioFiscal)
 
@@ -78,6 +92,86 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
     startTransition(async () => {
       await deleteDocumento(docId, cliente.id)
       setDocs(prev => prev.filter(d => d.id !== docId))
+    })
+  }
+
+  const handleUploadCertificado = async (file: File, socioId: string) => {
+    setUploadingCert(socioId)
+    const supabase = createClient()
+    const ext = file.name.split('.').pop()
+    const path = `tributario/${cliente.id}/certificados/${anioFiscal}/${socioId}_${Date.now()}.${ext}`
+    
+    const { data, error } = await supabase.storage.from('documentos_patrimoniales').upload(path, file, { upsert: false })
+    if (error) {
+      setUploadingCert(null)
+      alert(error.message)
+      return
+    }
+    const { data: { publicUrl } } = supabase.storage.from('documentos_patrimoniales').getPublicUrl(data.path)
+    
+    startTransition(async () => {
+      const existing = certificados.find(c => c.socio_id === socioId && c.anio === anioFiscal)
+      if (existing) await deleteCertificado(existing.id)
+      
+      const result = await createCertificado({ socio_id: socioId, anio: anioFiscal, archivo_url: publicUrl, archivo_nombre: file.name })
+      if (result.id) {
+        setCertificados(prev => [
+          ...prev.filter(c => !(c.socio_id === socioId && c.anio === anioFiscal)),
+          { id: result.id!, socio_id: socioId, anio: anioFiscal, archivo_url: publicUrl, archivo_nombre: file.name, created_at: new Date().toISOString() }
+        ])
+      }
+      setUploadingCert(null)
+    })
+  }
+
+  const handleDeleteCertificado = (certId: string) => {
+    startTransition(async () => {
+      await deleteCertificado(certId)
+      setCertificados(prev => prev.filter(c => c.id !== certId))
+    })
+  }
+
+  const handleUploadEntregable = async (file: File) => {
+    if (!tipoEntregable) return
+    setUploadingEntregable(true)
+    const supabase = createClient()
+    const path = `entregables/${cliente.id}/${anioFiscal}/${tipoEntregable.replace(/\s/g, '_')}_${Date.now()}.${file.name.split('.').pop()}`
+    
+    const { data, error } = await supabase.storage.from('documentos_patrimoniales').upload(path, file, { upsert: false })
+    if (error) {
+      setUploadingEntregable(false)
+      alert(error.message)
+      return
+    }
+    
+    const { data: { publicUrl } } = supabase.storage.from('documentos_patrimoniales').getPublicUrl(data.path)
+    
+    startTransition(async () => {
+      const result = await createEntregableCFO({
+        cliente_id: cliente.id,
+        tipo_documento: tipoEntregable,
+        anio: anioFiscal,
+        mes: null,
+        archivo_url: publicUrl,
+        archivo_nombre: file.name,
+      })
+      
+      if (result.id) {
+        setEntregables(prev => [...prev, {
+          id: result.id!, cliente_id: cliente.id, tipo_documento: tipoEntregable, 
+          anio: anioFiscal, mes: null, archivo_url: publicUrl, 
+          archivo_nombre: file.name, created_at: new Date().toISOString()
+        }])
+        setTipoEntregable('')
+      }
+      setUploadingEntregable(false)
+    })
+  }
+
+  const handleDeleteEntregable = (id: string) => {
+    startTransition(async () => {
+      await deleteEntregableCFO(id, cliente.id)
+      setEntregables(prev => prev.filter(e => e.id !== id))
     })
   }
 
@@ -247,6 +341,159 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
                No hay declaraciones F29 subidas para el año {anioFiscal}.
              </div>
            )}
+        </div>
+      </div>
+
+      {/* Certificados de Retiro */}
+      <div>
+        <div className="mb-4">
+          <h2 className="text-[11px] font-bold text-slate-400 tracking-widest uppercase mb-4">CERTIFICADOS DE RETIRO — AÑO {anioFiscal}</h2>
+        </div>
+
+        <div className="space-y-4">
+          {cliente.socios.map(socio => {
+            const cert = certificados.find(c => c.socio_id === socio.id && c.anio === anioFiscal)
+            const isLoading = uploadingCert === socio.id
+            
+            return (
+              <div key={socio.id} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-[14px]">
+                    {getInitials(socio.nombre)}
+                  </div>
+                  <div>
+                    <h3 className="text-[14px] font-bold text-slate-900">{socio.nombre}</h3>
+                    <p className="text-[12px] text-slate-500 mt-0.5">
+                      {socio.porcentaje_participacion}% · {socio.rut || 'Sin RUT'}
+                    </p>
+                  </div>
+                </div>
+
+                <div>
+                  {cert ? (
+                    <div className="flex items-center gap-2">
+                      <a href={cert.archivo_url} target="_blank" rel="noopener noreferrer" className="text-[12px] font-semibold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors">
+                        Ver PDF
+                      </a>
+                      {canEdit && (
+                        <button onClick={() => handleDeleteCertificado(cert.id)} className="text-[12px] font-semibold text-red-500 bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors">
+                          Eliminar
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    canEdit && (
+                      <button
+                        onClick={() => { pendingSocioId.current = socio.id; if (certInputRef.current) certInputRef.current.click() }}
+                        disabled={isLoading}
+                        className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 border-dashed hover:border-blue-400 hover:bg-blue-50/50 text-slate-600 hover:text-blue-600 text-[13px] font-medium rounded-lg transition-all disabled:opacity-50"
+                      >
+                        {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                        Adjuntar Certificado {anioFiscal}
+                      </button>
+                    )
+                  )}
+                </div>
+              </div>
+            )
+          })}
+          {cliente.socios.length === 0 && (
+            <div className="p-8 text-center text-[13px] text-slate-400 border border-slate-200 border-dashed rounded-xl">
+              No hay socios registrados para este cliente.
+            </div>
+          )}
+        </div>
+
+        <input 
+          ref={certInputRef} type="file" accept=".pdf" className="hidden" 
+          onChange={e => {
+             const file = e.target.files?.[0]
+             if (file && pendingSocioId.current) handleUploadCertificado(file, pendingSocioId.current)
+             e.target.value = ''
+          }} 
+        />
+      </div>
+
+      {/* Entregables CFO */}
+      <div>
+        <div className="mb-4">
+          <h2 className="text-[16px] font-bold text-slate-900">Entregables CFO — Año {anioFiscal}</h2>
+          <p className="text-[13px] text-slate-500 mt-1">Sube informes patrimoniales y análisis de inversiones generados por el CFO.</p>
+        </div>
+
+        {canEdit && (
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-6 flex gap-4 items-center">
+            <div className="w-64">
+              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Tipo de Documento</label>
+              <select 
+                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[13px] text-slate-900 outline-none font-medium"
+                value={tipoEntregable} onChange={e => setTipoEntregable(e.target.value)}
+              >
+                <option value="">Seleccionar tipo</option>
+                {TIPO_ENTREGABLE_OPTIONS.map((t, i) => <option key={i} value={t}>{t}</option>)}
+              </select>
+            </div>
+            
+            <div 
+              onClick={() => entregableRef.current?.click()}
+              className="flex-1 bg-white border border-dashed border-slate-300 rounded-lg h-14 flex items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-colors"
+            >
+              <span className="text-[13px] font-medium text-slate-500 flex items-center gap-2">
+                <FileText size={16} /> Seleccionar Archivo (PDF, Excel)...
+              </span>
+            </div>
+            
+            <button 
+              className="bg-blue-600 hover:bg-blue-700 text-white h-14 px-6 rounded-lg font-semibold text-[13px] flex items-center gap-2 transition-colors disabled:opacity-50"
+              onClick={() => entregableRef.current?.click()}
+              disabled={uploadingEntregable || !tipoEntregable}
+            >
+              {uploadingEntregable ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+              Subir Entregable
+            </button>
+
+            <input 
+              ref={entregableRef} type="file" accept=".pdf,.xlsx,.xls,.docx,.jpg,.jpeg,.png" className="hidden" 
+              onChange={e => {
+                 const file = e.target.files?.[0]
+                 if (file) handleUploadEntregable(file)
+                 e.target.value = ''
+              }} 
+            />
+          </div>
+        )}
+
+        <div className="bg-white border border-slate-200 rounded-xl shadow-sm divide-y divide-slate-100">
+          {entregables.filter(e => e.anio === anioFiscal).sort((a, b) => b.created_at.localeCompare(a.created_at)).map(e => (
+            <div key={e.id} className="p-4 flex items-center justify-between hover:bg-slate-50/50 transition-colors">
+              <div className="flex items-center gap-4">
+                <div className="w-10 h-10 rounded-lg bg-indigo-50 border border-indigo-100 text-indigo-600 flex items-center justify-center">
+                  <FileText size={20} />
+                </div>
+                <div>
+                  <h3 className="text-[14px] font-bold text-slate-900">{e.tipo_documento}</h3>
+                  <p className="text-[12px] text-slate-500 mt-0.5">
+                    {e.archivo_nombre} · {new Date(e.created_at).toLocaleDateString('es-CL')}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <a href={e.archivo_url} target="_blank" rel="noopener noreferrer" className="p-2 text-slate-400 hover:text-blue-600 transition-colors" title="Ver documento">
+                  <Eye size={18} />
+                </a>
+                {canEdit && (
+                  <button onClick={() => handleDeleteEntregable(e.id)} className="p-2 text-slate-400 hover:text-red-500 transition-colors" title="Eliminar">
+                    <Trash2 size={18} />
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+          {entregables.filter(e => e.anio === anioFiscal).length === 0 && (
+            <div className="p-8 text-center text-[13px] text-slate-400">
+              No hay entregables subidos para el año fiscal {anioFiscal}.
+            </div>
+          )}
         </div>
       </div>
     </div>

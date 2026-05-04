@@ -4,12 +4,15 @@ import { useState } from 'react'
 import Link from 'next/link'
 import * as Tabs from '@radix-ui/react-tabs'
 import { EditarFichaDrawer } from './EditarFichaDrawer'
+import { EditarSociosDrawer } from './EditarSociosDrawer'
+import { EditarInversionesDrawer } from './EditarInversionesDrawer'
 import { TabLegales } from './tabs/TabLegales'
 import { TabSocios } from './tabs/TabSocios'
 import { TabCartolas } from './tabs/TabCartolas'
 import { TabInversiones } from './tabs/TabInversiones'
 import { TabTributario } from './tabs/TabTributario'
 import { TabRRHH } from './tabs/TabRRHH'
+import { ChevronLeft, ChevronRight, Download } from 'lucide-react'
 import { useAnoFiscal, ANOS_FISCALES } from '@/lib/contexts/ano-fiscal'
 import { getSociedadColor } from '@/lib/helpers'
 import type { ClienteConRelaciones, Role } from '@/lib/types'
@@ -46,7 +49,7 @@ interface Props {
 
 export function ClienteDetail({ cliente, role }: Props) {
   const [tab, setTab]         = useState('legales')
-  const [editOpen, setEditOpen] = useState(false)
+  const [drawerOpen, setDrawerOpen] = useState<'legales' | 'socios' | 'inversiones' | null>(null)
   const { anioFiscal, setAnioFiscal } = useAnoFiscal()
   const color = getSociedadColor(cliente.tipo_sociedad)
   const bc    = BADGE_COLORS[color] ?? BADGE_COLORS.slate
@@ -59,17 +62,13 @@ export function ClienteDetail({ cliente, role }: Props) {
 
         {/* Breadcrumb */}
         <div style={{ height: 46, padding: '0 28px', display: 'flex', alignItems: 'center', borderBottom: '1px solid #f1f5f9' }}>
-          <div className="flex items-center gap-1.5" style={{ fontSize: 12, color: '#6b7280' }}>
-            <Link href="/clientes" style={{ color: '#6b7280', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4 }}>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ transform: 'rotate(180deg)' }}>
-                <path d="M9 18l6-6-6-6" />
-              </svg>
+          <div className="flex items-center gap-1.5 text-[12px] font-medium text-slate-500">
+            <Link href="/clientes" className="flex items-center gap-1 hover:text-slate-900 transition-colors">
+              <ChevronLeft size={14} />
               Clientes
             </Link>
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 18l6-6-6-6" />
-            </svg>
-            <span style={{ color: '#0f172a', fontWeight: 600 }}>{cliente.razon_social}</span>
+            <ChevronRight size={14} className="text-slate-300 mx-0.5" />
+            <span className="font-semibold text-slate-900">{cliente.razon_social}</span>
           </div>
         </div>
 
@@ -119,7 +118,7 @@ export function ClienteDetail({ cliente, role }: Props) {
 
             {role === 'admin' && EDITABLE_TABS.includes(tab) && (
               <button
-                onClick={() => setEditOpen(true)}
+                onClick={() => setDrawerOpen(tab as any)}
                 style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 20px', borderRadius: 9, border: 'none', background: '#0f172a', color: 'white', cursor: 'pointer', fontSize: 13, fontWeight: 600, boxShadow: '0 1px 4px rgba(0,0,0,0.2)', transition: 'opacity .15s' }}
                 onMouseEnter={e => ((e.currentTarget as HTMLButtonElement).style.opacity = '0.85')}
                 onMouseLeave={e => ((e.currentTarget as HTMLButtonElement).style.opacity = '1')}
@@ -187,12 +186,14 @@ export function ClienteDetail({ cliente, role }: Props) {
         </Tabs.Content>
       </div>
 
-      {role === 'admin' && (
-        <EditarFichaDrawer
-          cliente={cliente}
-          open={editOpen}
-          onClose={() => setEditOpen(false)}
-        />
+      {role === 'admin' && drawerOpen === 'legales' && (
+        <EditarFichaDrawer cliente={cliente} open={true} onClose={() => setDrawerOpen(null)} />
+      )}
+      {role === 'admin' && drawerOpen === 'socios' && (
+        <EditarSociosDrawer cliente={cliente} open={true} onClose={() => setDrawerOpen(null)} />
+      )}
+      {role === 'admin' && drawerOpen === 'inversiones' && (
+        <EditarInversionesDrawer cliente={cliente} open={true} anioFiscal={anioFiscal} onClose={() => setDrawerOpen(null)} />
       )}
     </Tabs.Root>
   )

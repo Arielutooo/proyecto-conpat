@@ -46,6 +46,14 @@ export async function createEntregableCFO(data: Omit<EntregableCFO, 'id' | 'crea
   return { id: row.id }
 }
 
+export async function deleteEntregableCFO(id: string, clienteId: string): Promise<ActionResult> {
+  const supabase = await createClient()
+  const { error } = await supabase.from('entregables_cfo').delete().eq('id', id)
+  if (error) return { error: error.message }
+  revalidatePath(`/clientes/${clienteId}`)
+  return {}
+}
+
 export async function createCertificadoRetiro(data: Omit<CertificadoRetiroAnual, 'id' | 'created_at'>): Promise<ActionResult> {
   const supabase = await createClient()
   const { data: row, error } = await supabase.from('certificados_retiro_anual').insert(data).select('id').single()

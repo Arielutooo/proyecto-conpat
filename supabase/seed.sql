@@ -1,6 +1,6 @@
 -- ═══════════════════════════════════════════════════════════════════
 -- CONPAT CRM — Seed datos de desarrollo local
--- Credenciales: admin@conpat.cl / admin1234 | cfo@conpat.cl / cfo12345
+-- Credenciales: conpat.cl / admin1234 | cfo@conpat.cl / cfo12345
 -- ═══════════════════════════════════════════════════════════════════
 
 

@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { formatCLP, formatUSD, TIPO_CAMBIO_USD_CLP, TIPO_INVERSION_LABELS } from '@/lib/helpers'
 import { updateCliente } from '@/lib/actions/clientes'
-import { Calendar, Check, TrendingUp } from 'lucide-react'
+import { Wallet, Landmark, TrendingUp, FileText } from 'lucide-react'
 import type { ClienteConRelaciones, Role } from '@/lib/types'
 
 interface Props {
@@ -30,12 +30,13 @@ export function TabInversiones({ cliente, role, anioFiscal }: Props) {
   const [, startTransition] = useTransition()
   const canEdit = role === 'admin'
 
-  const inversiones = cliente.inversiones
+  const inversiones = cliente.inversiones.filter(i => i.anio === anioFiscal)
   const financieras = inversiones.filter(i => i.categoria === 'financiera')
   const inmobiliarias = inversiones.filter(i => i.categoria === 'inmobiliaria')
 
-  const totalClp = financieras.reduce((s, i) => s + i.saldo_clp + i.saldo_usd * TIPO_CAMBIO_USD_CLP, 0)
-  const totalUsd = financieras.reduce((s, i) => s + i.saldo_usd + i.saldo_clp / TIPO_CAMBIO_USD_CLP, 0)
+  const totalAperturaClp = financieras.reduce((s, i) => s + (i.valor_apertura || 0), 0)
+  const totalCierreClp = financieras.reduce((s, i) => s + i.saldo_clp, 0)
+  const totalCierreUsd = totalCierreClp / TIPO_CAMBIO_USD_CLP
 
   const toggleSinInversiones = () => {
     const next = !sinInv
@@ -53,7 +54,7 @@ export function TabInversiones({ cliente, role, anioFiscal }: Props) {
           <h3 className="font-bold text-[14px] text-slate-900">Cliente sin inversiones</h3>
           <p className="text-[12px] text-slate-500 mt-0.5">Oculta y deshabilita el módulo de inversiones</p>
         </div>
-        <div 
+        <div
           onClick={canEdit ? toggleSinInversiones : undefined}
           className={`w-12 h-7 rounded-full relative transition-colors ${canEdit ? 'cursor-pointer' : ''} ${sinInv ? 'bg-blue-600' : 'bg-slate-200'}`}
         >
@@ -65,29 +66,29 @@ export function TabInversiones({ cliente, role, anioFiscal }: Props) {
         <>
           {/* KPIs */}
           <div className="grid grid-cols-2 gap-4">
-            <KPICard 
-              label="Apertura de Año" 
-              value={`01/01/${anioFiscal}`} 
-              sub="Inicio del ejercicio fiscal" 
-              icon={Calendar} 
+            <KPICard
+              label="Apertura de Año"
+              value={`01/01/${anioFiscal}`}
+              sub="Inicio del ejercicio fiscal"
+              icon={Wallet}
             />
-            <KPICard 
-              label="Cierre de Año" 
-              value={`31/12/${anioFiscal}`} 
-              sub="Cierre del ejercicio fiscal" 
-              icon={Check} 
+            <KPICard
+              label="Cierre de Año"
+              value={`31/12/${anioFiscal}`}
+              sub="Cierre del ejercicio fiscal"
+              icon={Landmark}
             />
-            <KPICard 
-              label={`AUM Total ${anioFiscal}`} 
-              value={`$${(totalClp / 1000000).toFixed(1)}M CLP`} 
-              sub={formatUSD(totalUsd)} 
-              icon={TrendingUp} 
+            <KPICard
+              label={`AUM Total ${anioFiscal}`}
+              value={`$${(totalCierreClp / 1000000).toFixed(1)}M CLP`}
+              sub={`${formatUSD(totalCierreUsd)} USD`}
+              icon={TrendingUp}
             />
-            <KPICard 
-              label="Fecha de Valoración" 
-              value={`31/12/${anioFiscal}`} 
-              sub={`Cierre ejercicio ${anioFiscal}`} 
-              icon={Calendar} 
+            <KPICard
+              label="Fecha de Valoración"
+              value={`31/12/${anioFiscal}`}
+              sub={`Cierre ejercicio ${anioFiscal}`}
+              icon={FileText}
             />
           </div>
 
@@ -110,11 +111,10 @@ export function TabInversiones({ cliente, role, anioFiscal }: Props) {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {financieras.length === 0 ? (
-                     <tr><td colSpan={6} className="py-8 text-center text-slate-400 text-sm">No hay inversiones financieras registradas.</td></tr>
+                    <tr><td colSpan={6} className="py-8 text-center text-slate-400 text-sm">No hay inversiones financieras registradas.</td></tr>
                   ) : financieras.map(inv => {
-                    const equivClp = inv.saldo_clp + inv.saldo_usd * TIPO_CAMBIO_USD_CLP
-                    const equivUsd = inv.saldo_usd + inv.saldo_clp / TIPO_CAMBIO_USD_CLP
-                    const isPositive = equivClp > 0 // Simplificación visual para el mockup
+                    const diff = inv.saldo_clp - (inv.valor_apertura || 0)
+                    const isPositive = diff >= 0
 
                     return (
                       <tr key={inv.id} className="hover:bg-slate-50/50">
@@ -127,18 +127,20 @@ export function TabInversiones({ cliente, role, anioFiscal }: Props) {
                           </span>
                         </td>
                         <td className="px-5 py-4 text-center text-slate-400 text-[13px]">
-                           {anioFiscal - 1}
+                          {inv.fecha_apertura ? inv.fecha_apertura.split('-')[0] : anioFiscal - 1}
                         </td>
                         <td className="px-5 py-4 text-right">
-                          <div className="font-semibold text-slate-900 text-[13px]">{formatCLP(inv.saldo_clp)}</div>
-                          <div className="text-[11px] text-slate-400 mt-0.5">{formatUSD(inv.saldo_usd)}</div>
+                          <div className="font-semibold text-slate-900 text-[13px]">{formatCLP(inv.valor_apertura || 0)}</div>
+                          <div className="text-[11px] text-slate-400 mt-0.5">{formatUSD((inv.valor_apertura || 0) / TIPO_CAMBIO_USD_CLP)}</div>
                         </td>
                         <td className="px-5 py-4 text-center text-slate-400 text-[13px]">
-                           {anioFiscal}
+                          {inv.fecha_cierre ? inv.fecha_cierre.split('-')[0] : anioFiscal}
                         </td>
                         <td className="px-5 py-4 text-right">
-                          <div className={`font-semibold text-[13px] ${isPositive ? 'text-[#059669]' : 'text-slate-900'}`}>{formatCLP(equivClp)}</div>
-                          <div className="text-[11px] text-slate-400 mt-0.5">{formatUSD(equivUsd)}</div>
+                          <div className={`font-semibold text-[13px] ${isPositive ? 'text-[#059669]' : 'text-slate-900'}`}>{formatCLP(inv.saldo_clp)}</div>
+                          <div className={`text-[11px] font-medium mt-0.5 ${isPositive ? 'text-[#059669]' : 'text-red-500'}`}>
+                            {isPositive ? '+' : ''}{formatCLP(diff)}
+                          </div>
                         </td>
                       </tr>
                     )
@@ -150,7 +152,7 @@ export function TabInversiones({ cliente, role, anioFiscal }: Props) {
 
           {/* Panel Inmobiliaria */}
           <div>
-             <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4">
+            <h3 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-4">
               Panel 2 — Inmobiliaria (Solo Lectura)
             </h3>
             {inmobiliarias.length === 0 ? (

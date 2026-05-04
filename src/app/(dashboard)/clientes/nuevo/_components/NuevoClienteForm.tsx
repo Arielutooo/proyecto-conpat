@@ -8,6 +8,7 @@ import { createCliente } from '@/lib/actions/clientes'
 import { createSocio } from '@/lib/actions/socios'
 import { createInversion } from '@/lib/actions/inversiones'
 import { TIPO_SOCIEDAD_OPTIONS, REGIMEN_OPTIONS } from '@/lib/helpers'
+import { useAnoFiscal } from '@/lib/contexts/ano-fiscal'
 
 const INITIAL = {
   // Paso 1
@@ -19,7 +20,7 @@ const INITIAL = {
   
   // Paso 2
   sin_inversiones: false,
-  inversiones: [] as { tipo: string; descripcion: string; valor_apertura: string; fecha_apertura: string; valor_cierre: string; fecha_cierre: string }[],
+  inversiones: [] as { tipo: string; descripcion: string; valor_apertura: string; fecha_apertura: string; valor_cierre: string; fecha_cierre: string; cantidad: string; valor_uf: string; es_propia: boolean; tiene_dfl2: boolean }[],
 
   // Paso 3
   tiene_nomina: false, emite_facturas: false, boletas_honorarios: false,
@@ -56,6 +57,7 @@ function SectionCard({ title, children }: { title: string; children: React.React
 }
 
 export function NuevoClienteForm() {
+  const { anioFiscal } = useAnoFiscal()
   const [form, setForm] = useState(INITIAL)
   const [step, setStep] = useState(1)
   const [error, setError] = useState<string | null>(null)
@@ -76,7 +78,7 @@ export function NuevoClienteForm() {
   const removeSocio = (index: number) => set('socios', form.socios.filter((_, i) => i !== index))
   const totalPart = form.socios.reduce((acc, s) => acc + (Number(s.porcentaje) || 0), 0)
 
-  const addInversion = () => set('inversiones', [...form.inversiones, { tipo: 'Fondo Mutuo', descripcion: '', valor_apertura: '', fecha_apertura: '', valor_cierre: '', fecha_cierre: '' }])
+  const addInversion = () => set('inversiones', [...form.inversiones, { tipo: 'Fondo Mutuo', descripcion: '', valor_apertura: '', fecha_apertura: '', valor_cierre: '', fecha_cierre: '', cantidad: '1', valor_uf: '', es_propia: true, tiene_dfl2: false }])
   const updateInversion = (index: number, field: string, val: string) => {
     const newInv = [...form.inversiones]
     newInv[index] = { ...newInv[index], [field]: val }
@@ -98,6 +100,10 @@ export function NuevoClienteForm() {
         regimen_tributario: form.regimen_tributario || null,
         representante_legal: form.representante_legal || null,
         metodo_creacion: form.metodo_creacion || null,
+        iniciacion_actividades: form.iniciacion_actividades,
+        rentas_presuntas: form.rentas_presuntas,
+        actividad_economica: form.actividad_economica || null,
+        codigo_sii: form.codigo_sii || null,
         conpat_factura: form.conpat_factura,
         moneda_facturacion: form.moneda_facturacion,
         cantidad_facturacion: form.cantidad_facturacion ? Number(form.cantidad_facturacion) : null,
@@ -123,18 +129,24 @@ export function NuevoClienteForm() {
 
       // 3. Crear Inversiones
       if (!form.sin_inversiones) {
+        const INMOBILIARIAS_TIPOS = ['Inmueble Propio', 'Inmueble Arrendado', 'Departamento', 'Casa', 'Oficina', 'Local Comercial']
         for (const i of form.inversiones) {
+          const isMueble = INMOBILIARIAS_TIPOS.includes(i.tipo)
           await createInversion({
             cliente_id: resCliente.id,
-            categoria: 'financiera', // Default simplificado
+            anio: anioFiscal,
+            categoria: isMueble ? 'inmobiliaria' : 'financiera',
             tipo_inversion: i.tipo,
             descripcion: i.descripcion || null,
-            saldo_clp: i.valor_cierre ? Number(i.valor_cierre) : (i.valor_apertura ? Number(i.valor_apertura) : 0),
+            saldo_clp: i.valor_cierre ? Number(i.valor_cierre) : 0,
             saldo_usd: 0,
-            cantidad: 1,
-            es_propia: true,
-            valor_uf: null,
-            tiene_dfl2: false
+            cantidad: isMueble ? Number(i.cantidad) || 1 : 1,
+            es_propia: i.es_propia,
+            valor_uf: i.valor_uf ? Number(i.valor_uf) : null,
+            tiene_dfl2: i.tiene_dfl2,
+            valor_apertura: i.valor_apertura ? Number(i.valor_apertura) : 0,
+            fecha_apertura: i.fecha_apertura || null,
+            fecha_cierre: i.fecha_cierre || null
           })
         }
       }
@@ -232,12 +244,18 @@ export function NuevoClienteForm() {
                       </select>
                     </Field>
                     <Field label="Método de Creación">
-                      <select style={selectStyle} value={form.metodo_creacion} onChange={e => set('metodo_creacion', e.target.value)}>
-                        <option value="">Seleccionar</option>
-                        {['Tradicional', 'Notaría Pública', 'Escritura Pública', 'Registro Electrónico'].map(m => (
-                          <option key={m} value={m}>{m}</option>
+                      <div className="flex bg-slate-100 p-1 rounded-lg">
+                        {['Tradicional', 'Empresa en un Día'].map(m => (
+                          <button
+                            key={m}
+                            type="button"
+                            onClick={() => set('metodo_creacion', m)}
+                            className={`flex-1 text-[13px] font-semibold py-2 rounded-md transition-all ${form.metodo_creacion === m ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                          >
+                            {m}
+                          </button>
                         ))}
-                      </select>
+                      </div>
                     </Field>
                     <Field label="Representante Legal">
                       <input style={inputStyle} value={form.representante_legal} onChange={e => set('representante_legal', e.target.value)} placeholder="Nombre completo" />
@@ -404,44 +422,73 @@ export function NuevoClienteForm() {
                            
                            <div className="space-y-4">
                              <Field label="Tipo de Inversión">
-                               <select style={selectStyle} value={inv.tipo} onChange={e => updateInversion(idx, 'tipo', e.target.value)}>
+                               <select style={selectStyle} value={inv.tipo} onChange={e => handleUpdateInv(idx, 'tipo', e.target.value)}>
                                  <option value="Fondo Mutuo">Fondo Mutuo</option>
                                  <option value="Acciones">Acciones</option>
+                                 <option value="Depósito a Plazo">Depósito a Plazo</option>
+                                 <option value="Bonos">Bonos</option>
+                                 <option value="Departamento">Departamento</option>
+                                 <option value="Casa">Casa</option>
+                                 <option value="Oficina">Oficina</option>
+                                 <option value="Local Comercial">Local Comercial</option>
                                  <option value="Inmueble Propio">Inmueble Propio</option>
                                  <option value="Inmueble Arrendado">Inmueble Arrendado</option>
+                                 <option value="Otro">Otro</option>
                                </select>
                              </Field>
                              <Field label="Descripción *">
                                <input style={inputStyle} placeholder="Ej: BCI Asset Management - Renta Fija" value={inv.descripcion} onChange={e => updateInversion(idx, 'descripcion', e.target.value)} />
                              </Field>
 
-                             <div className="pt-4 mt-2 border-t border-slate-100">
-                               <h5 className="text-[11px] font-bold text-slate-400 tracking-widest uppercase mb-4">AUM de la Inversión</h5>
-                               <div className="grid grid-cols-2 gap-6">
-                                 <div>
-                                   <div className="text-[12px] font-semibold text-slate-700 mb-3">Apertura</div>
-                                   <div className="space-y-3">
-                                     <Field label="Valor Apertura (CLP)">
-                                       <input type="number" style={inputStyle} placeholder="0" value={inv.valor_apertura} onChange={e => updateInversion(idx, 'valor_apertura', e.target.value)} />
-                                     </Field>
-                                     <Field label="Fecha Apertura">
-                                       <input type="text" style={inputStyle} placeholder="01/01/2025" value={inv.fecha_apertura} onChange={e => updateInversion(idx, 'fecha_apertura', e.target.value)} />
-                                     </Field>
-                                   </div>
+                             {['Inmueble Propio', 'Inmueble Arrendado', 'Departamento', 'Casa', 'Oficina', 'Local Comercial'].includes(inv.tipo) ? (
+                               <div className="pt-4 mt-2 border-t border-slate-100">
+                                 <h5 className="text-[11px] font-bold text-slate-400 tracking-widest uppercase mb-4">Detalles Inmobiliarios</h5>
+                                 <div className="grid grid-cols-2 gap-4">
+                                   <Field label="Valorización (UF)">
+                                     <input type="number" style={inputStyle} value={inv.valor_uf} onChange={e => updateInversion(idx, 'valor_uf', e.target.value)} />
+                                   </Field>
+                                   <Field label="Cantidad">
+                                     <input type="number" style={inputStyle} value={inv.cantidad} onChange={e => updateInversion(idx, 'cantidad', e.target.value)} />
+                                   </Field>
+                                   <label className="flex items-center gap-2 cursor-pointer mt-2">
+                                     <input type="checkbox" checked={inv.es_propia} onChange={e => updateInversion(idx, 'es_propia', e.target.checked as any)} className="rounded" />
+                                     <span className="text-sm font-medium text-slate-700">Inmueble propio</span>
+                                   </label>
+                                   <label className="flex items-center gap-2 cursor-pointer mt-2">
+                                     <input type="checkbox" checked={inv.tiene_dfl2} onChange={e => updateInversion(idx, 'tiene_dfl2', e.target.checked as any)} className="rounded" />
+                                     <span className="text-sm font-medium text-slate-700">Acoge DFL2</span>
+                                   </label>
                                  </div>
-                                 <div>
-                                   <div className="text-[12px] font-semibold text-slate-700 mb-3">Cierre</div>
-                                   <div className="space-y-3">
-                                     <Field label="Valor Cierre (CLP)">
-                                       <input type="number" style={inputStyle} placeholder="0" value={inv.valor_cierre} onChange={e => updateInversion(idx, 'valor_cierre', e.target.value)} />
-                                     </Field>
-                                     <Field label="Fecha Cierre">
-                                       <input type="text" style={inputStyle} placeholder="31/12/2025" value={inv.fecha_cierre} onChange={e => updateInversion(idx, 'fecha_cierre', e.target.value)} />
-                                     </Field>
+                               </div>
+                             ) : (
+                               <div className="pt-4 mt-2 border-t border-slate-100">
+                                 <h5 className="text-[11px] font-bold text-slate-400 tracking-widest uppercase mb-4">AUM de la Inversión</h5>
+                                 <div className="grid grid-cols-2 gap-6">
+                                   <div>
+                                     <div className="text-[12px] font-semibold text-slate-700 mb-3">Apertura</div>
+                                     <div className="space-y-3">
+                                       <Field label="Valor Apertura (CLP)">
+                                         <input type="number" style={inputStyle} placeholder="0" value={inv.valor_apertura} onChange={e => updateInversion(idx, 'valor_apertura', e.target.value)} />
+                                       </Field>
+                                       <Field label="Fecha Apertura">
+                                         <input type="date" style={inputStyle} value={inv.fecha_apertura} onChange={e => updateInversion(idx, 'fecha_apertura', e.target.value)} />
+                                       </Field>
+                                     </div>
+                                   </div>
+                                   <div>
+                                     <div className="text-[12px] font-semibold text-slate-700 mb-3">Cierre</div>
+                                     <div className="space-y-3">
+                                       <Field label="Valor Cierre (CLP)">
+                                         <input type="number" style={inputStyle} placeholder="0" value={inv.valor_cierre} onChange={e => updateInversion(idx, 'valor_cierre', e.target.value)} />
+                                       </Field>
+                                       <Field label="Fecha Cierre">
+                                         <input type="date" style={inputStyle} value={inv.fecha_cierre} onChange={e => updateInversion(idx, 'fecha_cierre', e.target.value)} />
+                                       </Field>
+                                     </div>
                                    </div>
                                  </div>
                                </div>
-                             </div>
+                             )}
                            </div>
                         </div>
                       ))}

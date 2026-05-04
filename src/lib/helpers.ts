@@ -15,8 +15,9 @@ export const BANCOS = [
 ]
 
 export const TIPO_SOCIEDAD_OPTIONS = ['SpA', 'Ltda', 'EIRL', 'SA', 'EU', 'Fundación']
+export const METODO_CREACION_OPTIONS = ['Tradicional', 'Empresa en un Día']
 
-export const REGIMEN_OPTIONS = ['Primera Categoría', 'Segunda Categoría', 'Semi Integrado', 'Atribuido', 'Renta Presunta']
+export const REGIMEN_OPTIONS = ['14A Semi-Integrado', '14D Transparente', '14 TER Pyme', '14D Pyme']
 
 export const TIPO_INVERSION_LABELS: Record<string, string> = {
   Fondo_Mutuo: 'Fondo Mutuo',
@@ -31,6 +32,7 @@ export const TIPO_INVERSION_LABELS: Record<string, string> = {
 }
 
 export const DOCS_LEGALES = [
+  { key: 'escritura_publica',label: 'Escritura Pública',           obligatorio: true  },
   { key: 'constitucion',   label: 'Constitución de Sociedad',  obligatorio: true  },
   { key: 'extracto',       label: 'Extracto',                  obligatorio: true  },
   { key: 'protocolizacion',label: 'Protocolización',           obligatorio: true  },
@@ -70,3 +72,11 @@ export const getSociedadColor = (tipo: string | null): string => {
 }
 
 export const TIPO_CAMBIO_USD_CLP = 920
+
+export const getInitials = (name: string | null): string => {
+  if (!name) return '?'
+  const parts = name.trim().split(' ').filter(Boolean)
+  if (parts.length === 0) return '?'
+  if (parts.length === 1) return parts[0][0].toUpperCase()
+  return (parts[0][0] + parts[1][0]).toUpperCase()
+}

@@ -1,0 +1,2 @@
+ALTER TABLE public.inversiones
+ADD COLUMN anio INT NOT NULL DEFAULT 2025;

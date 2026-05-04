@@ -20,7 +20,7 @@ export function TabCartolas({ cliente, role, anioFiscal }: Props) {
   const [uploading, setUploading] = useState(false)
   const [, startTransition] = useTransition()
   const fileRef = useRef<HTMLInputElement>(null)
-  const canEdit = role === 'admin' || role === 'cfo_externo'
+  const canEdit = role === 'admin'
 
   const filtered = cartolas.filter(c => c.anio === anioFiscal)
 

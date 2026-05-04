@@ -25,6 +25,10 @@ export interface Cliente {
   boletas_honorarios: boolean
   sin_inversiones: boolean
   cantidad_trabajadores: number
+  iniciacion_actividades: boolean
+  actividad_economica: string | null
+  codigo_sii: string | null
+  rentas_presuntas: boolean
   created_at: string
 }
 
@@ -49,6 +53,10 @@ export interface Inversion {
   es_propia: boolean
   valor_uf: number | null
   tiene_dfl2: boolean
+  valor_apertura: number
+  fecha_apertura: string | null
+  fecha_cierre: string | null
+  anio: number
   created_at: string
 }
 
