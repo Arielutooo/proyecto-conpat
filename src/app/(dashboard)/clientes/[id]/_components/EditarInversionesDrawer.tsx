@@ -66,7 +66,7 @@ export function EditarInversionesDrawer({ cliente, open, anioFiscal, onClose }: 
 
       // Deletes
       for (const id of deletedIds) {
-        await deleteInversion(id)
+        await deleteInversion(id, cliente.id)
       }
       
       // Upserts
@@ -92,7 +92,7 @@ export function EditarInversionesDrawer({ cliente, open, anioFiscal, onClose }: 
         if (inv.id.startsWith('new_')) {
           await createInversion({ cliente_id: cliente.id, ...data })
         } else {
-          await updateInversion(inv.id, data)
+          await updateInversion(inv.id, cliente.id, data)
         }
       }
       

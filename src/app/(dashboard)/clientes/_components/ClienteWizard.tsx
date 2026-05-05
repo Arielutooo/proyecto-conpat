@@ -52,6 +52,10 @@ export function ClienteWizard({ open, onClose }: Props) {
         cantidad_facturacion: form.cantidad_facturacion ? Number(form.cantidad_facturacion) : null,
         sin_inversiones: false,
         cantidad_trabajadores: 0,
+        iniciacion_actividades: false,
+        actividad_economica: '',
+        codigo_sii: '',
+        rentas_presuntas: false,
       })
       if (result.error) { setError(result.error); return }
       handleClose()

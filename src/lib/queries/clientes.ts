@@ -44,6 +44,8 @@ export async function getClientesConStats(): Promise<ClienteConStats[]> {
       cantidad_facturacion: c.cantidad_facturacion, tiene_nomina: c.tiene_nomina,
       emite_facturas: c.emite_facturas, boletas_honorarios: c.boletas_honorarios,
       sin_inversiones: c.sin_inversiones, cantidad_trabajadores: c.cantidad_trabajadores,
+      iniciacion_actividades: c.iniciacion_actividades, actividad_economica: c.actividad_economica,
+      codigo_sii: c.codigo_sii, rentas_presuntas: c.rentas_presuntas,
       created_at: c.created_at,
       socios_count: socios.length,
       inversiones_count: inversiones.length,

@@ -46,7 +46,7 @@ export function EditarSociosDrawer({ cliente, open, onClose }: Props) {
     startTransition(async () => {
       // Deletes
       for (const id of deletedIds) {
-        await deleteSocio(id)
+        await deleteSocio(id, cliente.id)
       }
       
       // Upserts
@@ -61,7 +61,7 @@ export function EditarSociosDrawer({ cliente, open, onClose }: Props) {
             porcentaje_participacion: s.porcentaje ? Number(s.porcentaje) : null
           })
         } else {
-          await updateSocio(s.id, {
+          await updateSocio(s.id, cliente.id, {
             nombre: s.nombre,
             rut: s.rut || null,
             porcentaje_participacion: s.porcentaje ? Number(s.porcentaje) : null

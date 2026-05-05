@@ -422,7 +422,7 @@ export function NuevoClienteForm() {
                            
                            <div className="space-y-4">
                              <Field label="Tipo de Inversión">
-                               <select style={selectStyle} value={inv.tipo} onChange={e => handleUpdateInv(idx, 'tipo', e.target.value)}>
+                               <select style={selectStyle} value={inv.tipo} onChange={e => updateInversion(idx, 'tipo', e.target.value)}>
                                  <option value="Fondo Mutuo">Fondo Mutuo</option>
                                  <option value="Acciones">Acciones</option>
                                  <option value="Depósito a Plazo">Depósito a Plazo</option>
