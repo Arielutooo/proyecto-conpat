@@ -43,9 +43,10 @@ export function LoginForm() {
     setError(null)
     startTransition(async () => {
       const supabase = createClient()
-      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) { setError('Correo o contraseña incorrectos.'); return }
-      router.push('/clientes')
+      const mustChange = data.user?.user_metadata?.must_change_password === true
+      router.push(mustChange ? '/cambiar-contrasena' : '/clientes')
       router.refresh()
     })
   }
@@ -164,16 +165,6 @@ export function LoginForm() {
           onFocus={e => (e.target.style.borderColor = 'oklch(0.55 0.18 245)')}
           onBlur={e => (e.target.style.borderColor = '#d1d5db')}
         />
-      </div>
-
-      <div style={{ textAlign: 'right', marginTop: -8 }}>
-        <button
-          type="button"
-          onClick={() => { setEmail('admin@conpat.cl'); setPassword('conpat2024') }}
-          style={{ fontSize: 12, color: 'oklch(0.55 0.18 245)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}
-        >
-          Usar credenciales de demo
-        </button>
       </div>
 
       {error && (

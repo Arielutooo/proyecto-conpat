@@ -32,11 +32,15 @@ enabled = true
 site_url = "http://127.0.0.1:3000"
 additional_redirect_urls = ["http://localhost:3000"]
 jwt_expiry = 3600
-enable_signup = true
+# A07/A06: Registro abierto deshabilitado — solo el admin crea usuarios en producción
+# En producción (Supabase cloud) deshabilitar también desde el dashboard:
+# Authentication → Providers → Email → Disable "Allow new users to sign up"
+enable_signup = false
 enable_anonymous_sign_ins = false
-minimum_password_length = 6
+# A07: Mínimo 10 caracteres (NIST 800-63b recomienda longitud sobre complejidad)
+minimum_password_length = 10
 
 [auth.email]
-enable_signup = true
-double_confirm_changes = false
+enable_signup = false
+double_confirm_changes = true
 enable_confirmations = false

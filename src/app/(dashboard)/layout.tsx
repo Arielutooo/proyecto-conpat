@@ -9,6 +9,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) redirect('/login')
+  if (user.user_metadata?.must_change_password === true) redirect('/cambiar-contrasena')
 
   const { data: roleRow } = await supabase
     .from('user_roles')
