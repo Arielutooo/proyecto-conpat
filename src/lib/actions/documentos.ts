@@ -2,7 +2,8 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/lib/supabase/server'
-import { requireAuth, requireAdmin, handleActionError } from '@/lib/auth'
+import { requireAuth, requireAdmin } from '@/lib/actions/auth-helpers'
+import { handleActionError } from '@/lib/auth'
 import type { Documento, CartolaMensual, EntregableCFO, CertificadoRetiroAnual } from '@/lib/types'
 
 type ActionResult = { error?: string; id?: string }
