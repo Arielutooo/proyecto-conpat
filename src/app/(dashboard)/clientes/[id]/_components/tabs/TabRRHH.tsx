@@ -30,7 +30,7 @@ export function TabRRHH({ cliente, role, anioFiscal }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null)
   const pendingCategory = useRef<string | null>(null)
   
-  const canEdit = role === 'admin'
+  const canEdit = role === 'admin' || role === 'master'
 
   const toggleCategory = (key: string) => {
     setOpenCategories(p => ({ ...p, [key]: !p[key] }))

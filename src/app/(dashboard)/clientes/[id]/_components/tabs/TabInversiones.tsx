@@ -28,7 +28,7 @@ function KPICard({ label, value, sub, icon: Icon }: { label: string; value: stri
 export function TabInversiones({ cliente, role, anioFiscal }: Props) {
   const [sinInv, setSinInv] = useState(cliente.sin_inversiones)
   const [, startTransition] = useTransition()
-  const canEdit = role === 'admin'
+  const canEdit = role === 'admin' || role === 'master'
 
   const inversiones = cliente.inversiones.filter(i => i.anio === anioFiscal)
   const financieras = inversiones.filter(i => i.categoria === 'financiera')

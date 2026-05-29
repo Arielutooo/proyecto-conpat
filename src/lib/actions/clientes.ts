@@ -24,6 +24,7 @@ export async function createCliente(data: Omit<Cliente, 'id' | 'created_at'>): P
       description: `Cliente '${data.razon_social}' creado`,
       entity_type: 'cliente',
       entity_id:   row.id,
+      empresa:     data.razon_social,
       metadata:    { rut: data.rut, tipo_sociedad: data.tipo_sociedad },
     })
     return { id: row.id }
@@ -49,6 +50,7 @@ export async function updateCliente(id: string, data: Partial<Omit<Cliente, 'id'
       description: `Cliente '${prev?.razon_social ?? id}' actualizado`,
       entity_type: 'cliente',
       entity_id:   id,
+      empresa:     prev?.razon_social ?? null,
       metadata:    data as Record<string, unknown>,
     })
     return {}
@@ -73,6 +75,7 @@ export async function deleteCliente(id: string): Promise<ActionResult> {
       description: `Cliente '${prev?.razon_social ?? id}' eliminado`,
       entity_type: 'cliente',
       entity_id:   id,
+      empresa:     prev?.razon_social ?? null,
     })
     return {}
   } catch (err) {

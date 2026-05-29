@@ -9,6 +9,16 @@ import type { Documento, CartolaMensual, EntregableCFO, CertificadoRetiroAnual }
 
 type ActionResult = { error?: string; id?: string }
 
+async function getEmpresa(clienteId: string): Promise<string | null> {
+  try {
+    const supabase = await createClient()
+    const { data } = await supabase.from('clientes').select('razon_social').eq('id', clienteId).single()
+    return data?.razon_social ?? null
+  } catch {
+    return null
+  }
+}
+
 // Documentos — solo admin (cartolas y documentos legales/tributarios)
 export async function createDocumento(data: Omit<Documento, 'id' | 'created_at'>): Promise<ActionResult> {
   try {
@@ -20,11 +30,13 @@ export async function createDocumento(data: Omit<Documento, 'id' | 'created_at'>
       return { error: 'No se pudo guardar el documento.' }
     }
     revalidatePath(`/clientes/${data.cliente_id}`)
+    const empresa = await getEmpresa(data.cliente_id)
     await logAudit({
       action:      'documento_subido',
       description: `Documento '${data.tipo_documento}' subido (categoría: ${data.categoria})`,
       entity_type: 'documento',
       entity_id:   row.id,
+      empresa,
       metadata:    { cliente_id: data.cliente_id, categoria: data.categoria, anio: data.anio },
     })
     return { id: row.id }
@@ -44,11 +56,13 @@ export async function deleteDocumento(id: string, clienteId: string): Promise<Ac
       return { error: 'No se pudo eliminar el documento.' }
     }
     revalidatePath(`/clientes/${clienteId}`)
+    const empresa = await getEmpresa(clienteId)
     await logAudit({
       action:      'documento_eliminado',
       description: `Documento '${prev?.tipo_documento ?? id}' eliminado (categoría: ${prev?.categoria ?? '?'})`,
       entity_type: 'documento',
       entity_id:   id,
+      empresa,
       metadata:    { cliente_id: clienteId },
     })
     return {}
@@ -68,11 +82,13 @@ export async function createCartola(data: Omit<CartolaMensual, 'id' | 'created_a
       return { error: 'No se pudo guardar la cartola.' }
     }
     revalidatePath(`/clientes/${data.cliente_id}`)
+    const empresa = await getEmpresa(data.cliente_id)
     await logAudit({
       action:      'cartola_subida',
       description: `Cartola bancaria subida (${data.banco}, ${data.mes}/${data.anio})`,
       entity_type: 'cartola',
       entity_id:   row.id,
+      empresa,
       metadata:    { cliente_id: data.cliente_id, banco: data.banco, mes: data.mes, anio: data.anio },
     })
     return { id: row.id }
@@ -92,11 +108,13 @@ export async function deleteCartola(id: string, clienteId: string): Promise<Acti
       return { error: 'No se pudo eliminar la cartola.' }
     }
     revalidatePath(`/clientes/${clienteId}`)
+    const empresa = await getEmpresa(clienteId)
     await logAudit({
       action:      'cartola_eliminada',
       description: `Cartola bancaria eliminada (${prev?.banco ?? '?'}, ${prev?.mes ?? '?'}/${prev?.anio ?? '?'})`,
       entity_type: 'cartola',
       entity_id:   id,
+      empresa,
       metadata:    { cliente_id: clienteId },
     })
     return {}
@@ -116,11 +134,13 @@ export async function createEntregableCFO(data: Omit<EntregableCFO, 'id' | 'crea
       return { error: 'No se pudo guardar el entregable.' }
     }
     revalidatePath(`/clientes/${data.cliente_id}`)
+    const empresa = await getEmpresa(data.cliente_id)
     await logAudit({
       action:      'entregable_subido',
       description: `Entregable CFO '${data.tipo_documento}' subido (${data.mes ? `${data.mes}/` : ''}${data.anio})`,
       entity_type: 'entregable',
       entity_id:   row.id,
+      empresa,
       metadata:    { cliente_id: data.cliente_id, tipo: data.tipo_documento, anio: data.anio },
     })
     return { id: row.id }
@@ -140,11 +160,13 @@ export async function deleteEntregableCFO(id: string, clienteId: string): Promis
       return { error: 'No se pudo eliminar el entregable.' }
     }
     revalidatePath(`/clientes/${clienteId}`)
+    const empresa = await getEmpresa(clienteId)
     await logAudit({
       action:      'entregable_eliminado',
       description: `Entregable CFO '${prev?.tipo_documento ?? id}' eliminado`,
       entity_type: 'entregable',
       entity_id:   id,
+      empresa,
       metadata:    { cliente_id: clienteId },
     })
     return {}

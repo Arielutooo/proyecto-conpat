@@ -49,7 +49,7 @@ export function TabLegales({ cliente, role, anioFiscal }: Props) {
     cliente.documentos.filter(d => d.categoria === 'legal')
   )
   const [, startTransition] = useTransition()
-  const canEdit = role === 'admin'
+  const canEdit = role === 'admin' || role === 'master'
 
   const getDoc = (tipo: string) => docs.find(d => d.tipo_documento === tipo)
 

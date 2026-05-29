@@ -19,7 +19,7 @@ export function TabSocios({ cliente, role, anioFiscal }: Props) {
   const [adding, setAdding] = useState(false)
   const [newSocio, setNewSocio] = useState({ nombre: '', rut: '', porcentaje_participacion: '' })
   const [, startTransition] = useTransition()
-  const canEdit = role === 'admin'
+  const canEdit = role === 'admin' || role === 'master'
 
   const total = socios.reduce((s, x) => s + (x.porcentaje_participacion ?? 0), 0)
 

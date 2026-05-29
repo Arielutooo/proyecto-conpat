@@ -20,7 +20,7 @@ export function TabCartolas({ cliente, role, anioFiscal }: Props) {
   const [uploading, setUploading] = useState(false)
   const [, startTransition] = useTransition()
   const fileRef = useRef<HTMLInputElement>(null)
-  const canEdit = role === 'admin'
+  const canEdit = role === 'admin' || role === 'master'
 
   const filtered = cartolas.filter(c => c.anio === anioFiscal)
 
@@ -145,7 +145,7 @@ export function TabCartolas({ cliente, role, anioFiscal }: Props) {
                     >
                       Ver
                     </a>
-                    {role === 'admin' && (
+                    {canEdit && (
                       <button
                         onClick={() => handleDelete(c.id)}
                         className="text-slate-300 hover:text-red-500 transition-colors"

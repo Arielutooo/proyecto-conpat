@@ -9,6 +9,16 @@ import type { Socio } from '@/lib/types'
 
 type ActionResult = { error?: string; id?: string }
 
+async function getEmpresa(clienteId: string): Promise<string | null> {
+  try {
+    const supabase = await createClient()
+    const { data } = await supabase.from('clientes').select('razon_social').eq('id', clienteId).single()
+    return data?.razon_social ?? null
+  } catch {
+    return null
+  }
+}
+
 export async function createSocio(data: Omit<Socio, 'id' | 'created_at'>): Promise<ActionResult> {
   try {
     await requireAdmin()
@@ -19,11 +29,13 @@ export async function createSocio(data: Omit<Socio, 'id' | 'created_at'>): Promi
       return { error: 'No se pudo crear el socio.' }
     }
     revalidatePath(`/clientes/${data.cliente_id}`)
+    const empresa = await getEmpresa(data.cliente_id)
     await logAudit({
       action:      'socio_creado',
-      description: `Socio '${data.nombre}' agregado al cliente ${data.cliente_id}`,
+      description: `Socio '${data.nombre}' agregado`,
       entity_type: 'socio',
       entity_id:   row.id,
+      empresa,
       metadata:    { cliente_id: data.cliente_id, rut: data.rut, porcentaje: data.porcentaje_participacion },
     })
     return { id: row.id }
@@ -43,11 +55,13 @@ export async function updateSocio(id: string, clienteId: string, data: Partial<O
       return { error: 'No se pudo actualizar el socio.' }
     }
     revalidatePath(`/clientes/${clienteId}`)
+    const empresa = await getEmpresa(clienteId)
     await logAudit({
       action:      'socio_actualizado',
       description: `Socio '${prev?.nombre ?? id}' actualizado`,
       entity_type: 'socio',
       entity_id:   id,
+      empresa,
       metadata:    { cliente_id: clienteId, ...data as Record<string, unknown> },
     })
     return {}
@@ -67,11 +81,13 @@ export async function deleteSocio(id: string, clienteId: string): Promise<Action
       return { error: 'No se pudo eliminar el socio.' }
     }
     revalidatePath(`/clientes/${clienteId}`)
+    const empresa = await getEmpresa(clienteId)
     await logAudit({
       action:      'socio_eliminado',
       description: `Socio '${prev?.nombre ?? id}' eliminado`,
       entity_type: 'socio',
       entity_id:   id,
+      empresa,
       metadata:    { cliente_id: clienteId },
     })
     return {}

@@ -9,6 +9,16 @@ import type { Inversion } from '@/lib/types'
 
 type ActionResult = { error?: string; id?: string }
 
+async function getEmpresa(clienteId: string): Promise<string | null> {
+  try {
+    const supabase = await createClient()
+    const { data } = await supabase.from('clientes').select('razon_social').eq('id', clienteId).single()
+    return data?.razon_social ?? null
+  } catch {
+    return null
+  }
+}
+
 export async function createInversion(data: Omit<Inversion, 'id' | 'created_at'>): Promise<ActionResult> {
   try {
     await requireAdmin()
@@ -19,11 +29,13 @@ export async function createInversion(data: Omit<Inversion, 'id' | 'created_at'>
       return { error: 'No se pudo registrar la inversión.' }
     }
     revalidatePath(`/clientes/${data.cliente_id}`)
+    const empresa = await getEmpresa(data.cliente_id)
     await logAudit({
       action:      'inversion_creada',
-      description: `Inversión '${data.tipo_inversion}' registrada para cliente ${data.cliente_id}`,
+      description: `Inversión '${data.tipo_inversion}' registrada`,
       entity_type: 'inversion',
       entity_id:   row.id,
+      empresa,
       metadata:    { cliente_id: data.cliente_id, categoria: data.categoria, tipo: data.tipo_inversion, anio: data.anio },
     })
     return { id: row.id }
@@ -43,11 +55,13 @@ export async function updateInversion(id: string, clienteId: string, data: Parti
       return { error: 'No se pudo actualizar la inversión.' }
     }
     revalidatePath(`/clientes/${clienteId}`)
+    const empresa = await getEmpresa(clienteId)
     await logAudit({
       action:      'inversion_actualizada',
       description: `Inversión '${prev?.tipo_inversion ?? id}' actualizada`,
       entity_type: 'inversion',
       entity_id:   id,
+      empresa,
       metadata:    { cliente_id: clienteId, ...data as Record<string, unknown> },
     })
     return {}
@@ -67,11 +81,13 @@ export async function deleteInversion(id: string, clienteId: string): Promise<Ac
       return { error: 'No se pudo eliminar la inversión.' }
     }
     revalidatePath(`/clientes/${clienteId}`)
+    const empresa = await getEmpresa(clienteId)
     await logAudit({
       action:      'inversion_eliminada',
       description: `Inversión '${prev?.tipo_inversion ?? id}' eliminada`,
       entity_type: 'inversion',
       entity_id:   id,
+      empresa,
       metadata:    { cliente_id: clienteId },
     })
     return {}

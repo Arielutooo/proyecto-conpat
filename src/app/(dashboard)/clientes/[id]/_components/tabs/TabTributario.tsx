@@ -42,7 +42,7 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
   const entregableRef = useRef<HTMLInputElement>(null)
   const pendingDocKey = useRef<string | null>(null)
   const pendingSocioId = useRef<string | null>(null)
-  const canEdit = role === 'admin' || role === 'cfo_externo'
+  const canEdit = role === 'admin' || role === 'cfo_externo' || role === 'master'
 
   const getDoc = (tipo: string) => docs.find(d => d.tipo_documento === tipo && d.anio === anioFiscal)
 
