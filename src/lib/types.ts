@@ -1,6 +1,18 @@
 // Tipos derivados del schema de Supabase (supabase/migrations/20240101000000_initial.sql)
 
-export type Role = 'admin' | 'cfo_externo'
+export type Role = 'admin' | 'cfo_externo' | 'master'
+
+export interface AuditLog {
+  id: string
+  user_id: string
+  user_email: string
+  action: string
+  description: string
+  entity_type: string
+  entity_id: string | null
+  metadata: Record<string, unknown> | null
+  created_at: string
+}
 
 export interface UserRole {
   id: string

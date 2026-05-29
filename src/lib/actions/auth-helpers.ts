@@ -27,8 +27,16 @@ export async function requireAuth(): Promise<AuthContext> {
 
 export async function requireAdmin(): Promise<AuthContext> {
   const ctx = await requireAuth()
-  if (ctx.role !== 'admin') {
+  if (ctx.role !== 'admin' && ctx.role !== 'master') {
     throw new AuthError('Se requiere rol de administrador', 403)
+  }
+  return ctx
+}
+
+export async function requireMaster(): Promise<AuthContext> {
+  const ctx = await requireAuth()
+  if (ctx.role !== 'master') {
+    throw new AuthError('Se requiere rol master', 403)
   }
   return ctx
 }

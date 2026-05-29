@@ -20,6 +20,16 @@ const UsersIcon = () => (
   </svg>
 )
 
+const AuditIcon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+    <path d="M14 2v6h6" />
+    <path d="M16 13H8" />
+    <path d="M16 17H8" />
+    <path d="M10 9H8" />
+  </svg>
+)
+
 const LogoutIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
@@ -27,6 +37,18 @@ const LogoutIcon = () => (
     <path d="M21 12H9" />
   </svg>
 )
+
+const ROLE_LABEL: Record<Role, string> = {
+  admin:       'ADMINISTRADOR',
+  cfo_externo: 'CFO EXTERNO',
+  master:      'MASTER',
+}
+
+const ROLE_DOT: Record<Role, string> = {
+  admin:       '#4ade80',
+  cfo_externo: '#60a5fa',
+  master:      '#C84632',
+}
 
 export function Sidebar({ role, userName }: SidebarProps) {
   const pathname = usePathname()
@@ -39,7 +61,8 @@ export function Sidebar({ role, userName }: SidebarProps) {
   }
 
   const navItems = [
-    { href: '/clientes', label: role === 'admin' ? 'Clientes' : 'Mis Clientes', icon: <UsersIcon /> },
+    { href: '/clientes', label: role === 'cfo_externo' ? 'Mis Clientes' : 'Clientes', icon: <UsersIcon /> },
+    ...(role === 'master' ? [{ href: '/control-cambios', label: 'Control de Cambios', icon: <AuditIcon /> }] : []),
   ]
 
   const initial = userName?.charAt(0).toUpperCase() ?? 'U'
@@ -60,9 +83,9 @@ export function Sidebar({ role, userName }: SidebarProps) {
           className="flex items-center gap-2"
           style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 8, padding: '8px 12px' }}
         >
-          <div style={{ width: 7, height: 7, borderRadius: '50%', background: role === 'admin' ? '#4ade80' : '#60a5fa', flexShrink: 0 }} />
+          <div style={{ width: 7, height: 7, borderRadius: '50%', background: ROLE_DOT[role], flexShrink: 0 }} />
           <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, letterSpacing: '0.08em' }}>
-            {role === 'admin' ? 'ADMINISTRADOR' : 'CFO EXTERNO'}
+            {ROLE_LABEL[role]}
           </span>
         </div>
       </div>
