@@ -1,3 +1,4 @@
+import { ConpatLogo } from '@/components/ConpatLogo'
 import { LoginForm } from './_components/LoginForm'
 
 export default function LoginPage() {
@@ -6,25 +7,16 @@ export default function LoginPage() {
       {/* Left dark panel */}
       <div
         className="relative hidden lg:flex flex-col justify-between overflow-hidden"
-        style={{ width: '45%', background: '#0d1117', padding: '48px 52px' }}
+        style={{ width: '45%', background: '#363E46', padding: '48px 52px' }}
       >
         {/* Decorative circles */}
-        <div style={{ position: 'absolute', top: -80, right: -80, width: 300, height: 300, borderRadius: '50%', background: 'oklch(0.55 0.18 245 / 0.08)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', bottom: -40, left: -40, width: 200, height: 200, borderRadius: '50%', background: 'oklch(0.72 0.12 82 / 0.06)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: -80, right: -80, width: 300, height: 300, borderRadius: '50%', background: 'rgba(203,56,23,0.08)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: -40, left: -40, width: 200, height: 200, borderRadius: '50%', background: 'rgba(255,255,255,0.03)', pointerEvents: 'none' }} />
 
         {/* Logo + headline */}
         <div>
-          <div className="flex items-center gap-3 mb-16">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'oklch(0.55 0.18 245)' }}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" />
-                <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" />
-              </svg>
-            </div>
-            <div>
-              <div className="font-serif text-white" style={{ fontSize: 22, lineHeight: 1 }}>CONPAT</div>
-              <div style={{ color: 'rgba(255,255,255,0.35)', fontSize: 10, letterSpacing: '0.14em', textTransform: 'uppercase' }}>CRM Patrimonial</div>
-            </div>
+          <div className="mb-16">
+            <ConpatLogo variant="white" width={140} />
           </div>
 
           <h1 className="font-serif text-white mb-5" style={{ fontSize: 38, lineHeight: 1.15 }}>
@@ -55,13 +47,13 @@ export default function LoginPage() {
       </div>
 
       {/* Right light panel */}
-      <div className="flex-1 flex items-center justify-center bg-slate-50 p-12">
+      <div className="flex-1 flex items-center justify-center p-12" style={{ background: '#F3F3EB' }}>
         <div className="w-full max-w-sm">
-          <h2 className="text-xl font-bold text-slate-900 mb-1.5">Iniciar sesión</h2>
-          <p className="text-slate-500 text-sm mb-7">Selecciona tu rol de acceso para continuar.</p>
+          <h2 className="text-xl font-bold mb-1.5" style={{ color: '#363E46' }}>Iniciar sesión</h2>
+          <p className="text-sm mb-7" style={{ color: '#464C5E' }}>Selecciona tu rol de acceso para continuar.</p>
           <LoginForm />
-          <div className="mt-8 pt-6 border-t border-slate-100 text-center">
-            <p className="text-xs text-slate-400">CONPAT v1.0 — Fase 1 MVP Local · Supabase + Next.js</p>
+          <div className="mt-8 pt-6 text-center" style={{ borderTop: '1px solid #EDEEF1' }}>
+            <p style={{ fontSize: 11, color: '#94a3b8' }}>CONPAT · Sistema de Gestión Patrimonial</p>
           </div>
         </div>
       </div>

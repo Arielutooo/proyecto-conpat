@@ -13,7 +13,7 @@ export default function Error({ error, reset }: ErrorProps) {
   }, [error])
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f1f5f9', fontFamily: "'DM Sans', sans-serif" }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F3F3EB', fontFamily: "'DM Sans', sans-serif" }}>
       <div style={{ textAlign: 'center', maxWidth: 400 }}>
         <div style={{ width: 48, height: 48, borderRadius: 12, background: '#fef2f2', border: '1px solid #fecaca', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
           <span style={{ fontSize: 22 }}>⚠</span>
@@ -24,7 +24,7 @@ export default function Error({ error, reset }: ErrorProps) {
         </div>
         <button
           onClick={reset}
-          style={{ padding: '10px 24px', background: 'oklch(0.55 0.18 245)', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+          style={{ padding: '10px 24px', background: '#CB3817', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
         >
           Reintentar
         </button>

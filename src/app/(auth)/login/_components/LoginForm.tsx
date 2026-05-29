@@ -53,11 +53,11 @@ export function LoginForm() {
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
-    border: '1px solid #d1d5db',
+    border: '1px solid #EDEEF1',
     borderRadius: 8,
     padding: '9px 12px',
     fontSize: 13,
-    color: '#0f172a',
+    color: '#363E46',
     outline: 'none',
     background: 'white',
     boxSizing: 'border-box',
@@ -69,10 +69,10 @@ export function LoginForm() {
     return (
       <div className="space-y-5">
         <div>
-          <h2 style={{ fontSize: 16, fontWeight: 600, color: '#0f172a', margin: '0 0 4px' }}>
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: '#363E46', margin: '0 0 4px' }}>
             ¿Cómo ingresarás?
           </h2>
-          <p style={{ fontSize: 13, color: '#6b7280', margin: 0 }}>Selecciona tu perfil de acceso</p>
+          <p style={{ fontSize: 13, color: '#464C5E', margin: 0 }}>Selecciona tu perfil de acceso</p>
         </div>
         <div className="grid grid-cols-2 gap-3">
           {ROLE_CARDS.map(card => (
@@ -86,26 +86,26 @@ export function LoginForm() {
                 gap: 10,
                 padding: '22px 16px',
                 borderRadius: 12,
-                border: '2px solid #e5e7eb',
+                border: '2px solid #EDEEF1',
                 background: 'white',
                 cursor: 'pointer',
                 transition: 'all 0.15s',
                 width: '100%',
               }}
               onMouseEnter={e => {
-                e.currentTarget.style.borderColor = 'oklch(0.55 0.18 245)'
-                e.currentTarget.style.background = 'oklch(0.97 0.04 245)'
+                e.currentTarget.style.borderColor = '#CB3817'
+                e.currentTarget.style.background = '#FFF0EC'
               }}
               onMouseLeave={e => {
-                e.currentTarget.style.borderColor = '#e5e7eb'
+                e.currentTarget.style.borderColor = '#EDEEF1'
                 e.currentTarget.style.background = 'white'
               }}
             >
-              <div style={{ width: 46, height: 46, borderRadius: 12, background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#0f172a' }}>
+              <div style={{ width: 46, height: 46, borderRadius: 12, background: '#F3F3EB', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#363E46' }}>
                 {card.icon}
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: 14, fontWeight: 600, color: '#0f172a' }}>{card.label}</div>
+                <div style={{ fontSize: 14, fontWeight: 600, color: '#363E46' }}>{card.label}</div>
                 <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>{card.sub}</div>
               </div>
             </button>
@@ -118,18 +118,17 @@ export function LoginForm() {
   /* ── Step 2: credentials ── */
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {/* Role selected chip — matches reference screenshot */}
-      <div style={{ background: 'oklch(0.97 0.04 245)', border: '1px solid oklch(0.88 0.06 245)', borderRadius: 8, padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+      <div style={{ background: '#FFF0EC', border: '1px solid #F4C5B5', borderRadius: 8, padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ color: 'oklch(0.55 0.18 245)', fontSize: 14 }}>◆</span>
-          <span style={{ fontSize: 13, fontWeight: 600, color: '#0f172a' }}>
+          <span style={{ color: '#CB3817', fontSize: 14 }}>◆</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: '#363E46' }}>
             {role === 'admin' ? 'Administrador · Gestor Patrimonial' : 'CFO Externo · Contable'}
           </span>
         </div>
         <button
           type="button"
           onClick={() => { setRole(null); setError(null) }}
-          style={{ fontSize: 12, fontWeight: 500, color: 'oklch(0.55 0.18 245)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+          style={{ fontSize: 12, fontWeight: 500, color: '#CB3817', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
         >
           Cambiar
         </button>
@@ -146,8 +145,8 @@ export function LoginForm() {
           required
           placeholder="tu@empresa.cl"
           style={inputStyle}
-          onFocus={e => (e.target.style.borderColor = 'oklch(0.55 0.18 245)')}
-          onBlur={e => (e.target.style.borderColor = '#d1d5db')}
+          onFocus={e => (e.target.style.borderColor = '#CB3817')}
+          onBlur={e => (e.target.style.borderColor = '#EDEEF1')}
         />
       </div>
 
@@ -162,8 +161,8 @@ export function LoginForm() {
           required
           placeholder="••••••••"
           style={inputStyle}
-          onFocus={e => (e.target.style.borderColor = 'oklch(0.55 0.18 245)')}
-          onBlur={e => (e.target.style.borderColor = '#d1d5db')}
+          onFocus={e => (e.target.style.borderColor = '#CB3817')}
+          onBlur={e => (e.target.style.borderColor = '#EDEEF1')}
         />
       </div>
 
@@ -185,7 +184,7 @@ export function LoginForm() {
           padding: '11px 24px',
           borderRadius: 8,
           border: 'none',
-          background: isPending || !email || !password ? '#94a3b8' : 'oklch(0.55 0.18 245)',
+          background: isPending || !email || !password ? '#94a3b8' : '#CB3817',
           color: 'white',
           fontSize: 14,
           fontWeight: 500,
@@ -195,7 +194,7 @@ export function LoginForm() {
           justifyContent: 'center',
           gap: 6,
           transition: 'opacity 0.15s',
-          boxShadow: isPending || !email || !password ? 'none' : '0 1px 3px oklch(0.55 0.18 245 / 0.4)',
+          boxShadow: isPending || !email || !password ? 'none' : '0 1px 3px rgba(203,56,23,0.4)',
         }}
       >
         {isPending ? 'Autenticando…' : 'Ingresar al sistema'}

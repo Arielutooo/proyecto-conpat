@@ -24,7 +24,7 @@ const sizeStyles: Record<BtnSize, React.CSSProperties> = {
 }
 
 const variantStyles: Record<BtnVariant, React.CSSProperties> = {
-  primary: { background: 'oklch(0.55 0.18 245)', color: 'white', boxShadow: '0 1px 3px oklch(0.55 0.18 245 / 0.4)' },
+  primary: { background: '#CB3817', color: 'white', boxShadow: '0 1px 3px rgba(203,56,23,0.4)' },
   secondary: { background: 'white', color: '#374151', border: '1px solid #d1d5db', boxShadow: '0 1px 2px rgba(0,0,0,0.05)' },
   ghost: { background: 'transparent', color: '#6b7280' },
   danger: { background: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' },

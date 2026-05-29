@@ -22,7 +22,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <AnoFiscalProvider>
-      <div className="flex h-screen overflow-hidden" style={{ background: '#f1f5f9' }}>
+      <div className="flex h-screen overflow-hidden" style={{ background: '#F3F3EB' }}>
         <Sidebar role={role} userName={userName} />
         <main className="flex-1 min-w-0 overflow-auto">
           {children}

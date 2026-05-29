@@ -15,8 +15,8 @@ export function CambiarContrasenaForm() {
     e.preventDefault()
     setError(null)
 
-    if (password.length < 8) {
-      setError('La contraseña debe tener al menos 8 caracteres.')
+    if (password.length < 10) {
+      setError('La contraseña debe tener al menos 10 caracteres.')
       return
     }
     if (password !== confirm) {
@@ -41,11 +41,11 @@ export function CambiarContrasenaForm() {
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
-    border: '1px solid #d1d5db',
+    border: '1px solid #EDEEF1',
     borderRadius: 8,
     padding: '9px 12px',
     fontSize: 13,
-    color: '#0f172a',
+    color: '#363E46',
     outline: 'none',
     background: 'white',
     boxSizing: 'border-box',
@@ -54,7 +54,7 @@ export function CambiarContrasenaForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div style={{ background: 'oklch(0.97 0.06 50)', border: '1px solid oklch(0.88 0.08 50)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: 'oklch(0.45 0.15 50)' }}>
+      <div style={{ background: '#FFF0EC', border: '1px solid #F4C5B5', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#8B2410' }}>
         Por seguridad, debes establecer una contraseña personal antes de continuar.
       </div>
 
@@ -67,10 +67,10 @@ export function CambiarContrasenaForm() {
           value={password}
           onChange={e => setPassword(e.target.value)}
           required
-          placeholder="Mínimo 8 caracteres"
+          placeholder="Mínimo 10 caracteres"
           style={inputStyle}
-          onFocus={e => (e.target.style.borderColor = 'oklch(0.55 0.18 245)')}
-          onBlur={e => (e.target.style.borderColor = '#d1d5db')}
+          onFocus={e => (e.target.style.borderColor = '#CB3817')}
+          onBlur={e => (e.target.style.borderColor = '#EDEEF1')}
         />
       </div>
 
@@ -85,8 +85,8 @@ export function CambiarContrasenaForm() {
           required
           placeholder="Repite tu nueva contraseña"
           style={inputStyle}
-          onFocus={e => (e.target.style.borderColor = 'oklch(0.55 0.18 245)')}
-          onBlur={e => (e.target.style.borderColor = '#d1d5db')}
+          onFocus={e => (e.target.style.borderColor = '#CB3817')}
+          onBlur={e => (e.target.style.borderColor = '#EDEEF1')}
         />
       </div>
 
@@ -108,7 +108,7 @@ export function CambiarContrasenaForm() {
           padding: '11px 24px',
           borderRadius: 8,
           border: 'none',
-          background: isPending || !password || !confirm ? '#94a3b8' : 'oklch(0.55 0.18 245)',
+          background: isPending || !password || !confirm ? '#94a3b8' : '#CB3817',
           color: 'white',
           fontSize: 14,
           fontWeight: 500,
@@ -118,7 +118,7 @@ export function CambiarContrasenaForm() {
           justifyContent: 'center',
           gap: 6,
           transition: 'opacity 0.15s',
-          boxShadow: isPending || !password || !confirm ? 'none' : '0 1px 3px oklch(0.55 0.18 245 / 0.4)',
+          boxShadow: isPending || !password || !confirm ? 'none' : '0 1px 3px rgba(203,56,23,0.4)',
         }}
       >
         {isPending ? 'Guardando…' : 'Establecer contraseña'}

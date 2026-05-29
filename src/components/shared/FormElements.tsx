@@ -38,11 +38,11 @@ export const Input = ({ label, value, onChange, type = 'text', placeholder, requ
         fontSize: 13,
         color: '#0f172a',
         outline: 'none',
-        background: readOnly ? '#f1f5f9' : error ? '#fef2f2' : 'white',
+        background: readOnly ? '#F3F3EB' : error ? '#fef2f2' : 'white',
         boxSizing: 'border-box',
         transition: 'border-color 0.15s',
       }}
-      onFocus={e => { if (!readOnly) e.target.style.borderColor = 'oklch(0.55 0.18 245)' }}
+      onFocus={e => { if (!readOnly) e.target.style.borderColor = '#CB3817' }}
       onBlur={e => { e.target.style.borderColor = error ? '#fca5a5' : '#d1d5db' }}
     />
     {hint && !error && <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>{hint}</div>}
@@ -92,7 +92,7 @@ export const Select = ({ label, value, onChange, options, required, className = 
         backgroundPosition: 'right 10px center',
         paddingRight: 30,
       }}
-      onFocus={e => { e.target.style.borderColor = 'oklch(0.55 0.18 245)' }}
+      onFocus={e => { e.target.style.borderColor = '#CB3817' }}
       onBlur={e => { e.target.style.borderColor = '#d1d5db' }}
     >
       {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -128,12 +128,12 @@ export const FileDropzone = ({ label, onFile, accept = '.pdf', fileName }: FileD
         onDragLeave={() => setDrag(false)}
         onDrop={handleDrop}
         style={{
-          border: `2px dashed ${drag ? 'oklch(0.55 0.18 245)' : '#d1d5db'}`,
+          border: `2px dashed ${drag ? '#CB3817' : '#d1d5db'}`,
           borderRadius: 10,
           padding: '20px 16px',
           textAlign: 'center',
           cursor: 'pointer',
-          background: drag ? 'oklch(0.97 0.04 245)' : '#f9fafb',
+          background: drag ? '#FFF0EC' : '#f9fafb',
           transition: 'all 0.15s',
         }}
       >
@@ -145,7 +145,7 @@ export const FileDropzone = ({ label, onFile, accept = '.pdf', fileName }: FileD
           onChange={e => { if (e.target.files?.[0]) onFile(e.target.files[0]) }}
         />
         {fileName ? (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', color: 'oklch(0.55 0.18 245)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center', color: '#CB3817' }}>
             <Icon name="file" size={16} />
             <span style={{ fontSize: 13, fontWeight: 500 }}>{fileName}</span>
           </div>
@@ -153,7 +153,7 @@ export const FileDropzone = ({ label, onFile, accept = '.pdf', fileName }: FileD
           <>
             <Icon name="upload" size={20} style={{ color: '#9ca3af', marginBottom: 8, display: 'block', margin: '0 auto 8px' }} />
             <div style={{ fontSize: 12, color: '#6b7280', marginTop: 8 }}>
-              Arrastra aquí o <span style={{ color: 'oklch(0.55 0.18 245)', fontWeight: 500 }}>selecciona archivo</span>
+              Arrastra aquí o <span style={{ color: '#CB3817', fontWeight: 500 }}>selecciona archivo</span>
             </div>
             <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 2 }}>
               {accept.toUpperCase().replace(/\./g, '').split(',').join(', ')}

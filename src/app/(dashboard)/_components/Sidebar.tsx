@@ -3,19 +3,13 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { ConpatLogo } from '@/components/ConpatLogo'
 import type { Role } from '@/lib/types'
 
 interface SidebarProps {
   role: Role
   userName: string
 }
-
-const BriefcaseIcon = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20 7H4a2 2 0 00-2 2v10a2 2 0 002 2h16a2 2 0 002-2V9a2 2 0 00-2-2z" />
-    <path d="M16 7V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v2" />
-  </svg>
-)
 
 const UsersIcon = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -53,24 +47,11 @@ export function Sidebar({ role, userName }: SidebarProps) {
   return (
     <aside
       className="flex flex-col h-full flex-shrink-0"
-      style={{ background: '#0d1117', width: 240, minWidth: 240 }}
+      style={{ background: '#363E46', width: 240, minWidth: 240 }}
     >
       {/* Logo */}
-      <div className="px-5 pt-6 pb-5" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-        <div className="flex items-center gap-2.5">
-          <div
-            className="w-8 h-8 flex items-center justify-center flex-shrink-0 text-white"
-            style={{ background: 'oklch(0.55 0.18 245)', borderRadius: 8 }}
-          >
-            <BriefcaseIcon />
-          </div>
-          <div>
-            <div className="font-serif text-white" style={{ fontSize: 17, lineHeight: 1.1 }}>CONPAT</div>
-            <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 9, letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-              Gestión Patrimonial
-            </div>
-          </div>
-        </div>
+      <div className="px-5 pt-5 pb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+        <ConpatLogo variant="white" width={118} />
       </div>
 
       {/* Role pill */}
@@ -79,7 +60,7 @@ export function Sidebar({ role, userName }: SidebarProps) {
           className="flex items-center gap-2"
           style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 8, padding: '8px 12px' }}
         >
-          <div style={{ width: 7, height: 7, borderRadius: '50%', background: role === 'admin' ? 'oklch(0.7 0.15 145)' : 'oklch(0.7 0.15 250)', flexShrink: 0 }} />
+          <div style={{ width: 7, height: 7, borderRadius: '50%', background: role === 'admin' ? '#4ade80' : '#60a5fa', flexShrink: 0 }} />
           <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11, letterSpacing: '0.08em' }}>
             {role === 'admin' ? 'ADMINISTRADOR' : 'CFO EXTERNO'}
           </span>
@@ -98,9 +79,9 @@ export function Sidebar({ role, userName }: SidebarProps) {
               style={{
                 borderRadius: 8,
                 padding: '9px 12px',
-                background: active ? 'oklch(0.55 0.18 245)' : 'transparent',
+                background: active ? '#CB3817' : 'transparent',
                 color: active ? 'white' : 'rgba(255,255,255,0.55)',
-                boxShadow: active ? '0 0 16px oklch(0.55 0.18 245 / 0.35)' : 'none',
+                boxShadow: active ? '0 0 16px rgba(203,56,23,0.35)' : 'none',
                 fontSize: 13,
                 fontWeight: active ? 600 : 400,
                 textDecoration: 'none',
@@ -118,7 +99,7 @@ export function Sidebar({ role, userName }: SidebarProps) {
         <div className="flex items-center gap-3">
           <div
             className="w-8 h-8 flex items-center justify-center flex-shrink-0"
-            style={{ borderRadius: '50%', background: 'oklch(0.55 0.18 245)' }}
+            style={{ borderRadius: '50%', background: '#CB3817' }}
           >
             <span style={{ color: 'white', fontSize: 12, fontWeight: 700 }}>{initial}</span>
           </div>

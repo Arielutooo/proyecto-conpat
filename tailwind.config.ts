@@ -10,11 +10,16 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          DEFAULT: 'oklch(0.55 0.18 245)',
-          light: 'oklch(0.97 0.04 245)',
-          dark:  'oklch(0.35 0.18 245)',
+          DEFAULT: '#CB3817',
+          hover:   '#C9241A',
+          light:   '#FFF0EC',
+          border:  '#F4C5B5',
+          dark:    '#8B2410',
         },
-        sidebar: '#0d1117',
+        sidebar:    '#363E46',
+        'cp-gray':  '#464C5E',
+        'cp-pearl': '#EDEEF1',
+        'cp-alabaster': '#F3F3EB',
       },
       fontFamily: {
         serif: ['var(--font-dm-serif)', 'serif'],
