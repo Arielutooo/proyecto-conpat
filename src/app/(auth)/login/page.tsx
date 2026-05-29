@@ -10,7 +10,7 @@ export default function LoginPage() {
         style={{ width: '45%', background: '#363E46', padding: '48px 52px' }}
       >
         {/* Decorative circles */}
-        <div style={{ position: 'absolute', top: -80, right: -80, width: 300, height: 300, borderRadius: '50%', background: 'rgba(203,56,23,0.08)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', top: -80, right: -80, width: 300, height: 300, borderRadius: '50%', background: 'rgba(200,70,50,0.08)', pointerEvents: 'none' }} />
         <div style={{ position: 'absolute', bottom: -40, left: -40, width: 200, height: 200, borderRadius: '50%', background: 'rgba(255,255,255,0.03)', pointerEvents: 'none' }} />
 
         {/* Logo + headline */}
@@ -50,7 +50,7 @@ export default function LoginPage() {
       <div className="flex-1 flex items-center justify-center p-12" style={{ background: '#F3F3EB' }}>
         <div className="w-full max-w-sm">
           <h2 className="text-xl font-bold mb-1.5" style={{ color: '#363E46' }}>Iniciar sesión</h2>
-          <p className="text-sm mb-7" style={{ color: '#464C5E' }}>Selecciona tu rol de acceso para continuar.</p>
+          <p className="text-sm mb-7" style={{ color: '#464C5E' }}>Ingresa tus credenciales para acceder al sistema.</p>
           <LoginForm />
           <div className="mt-8 pt-6 text-center" style={{ borderTop: '1px solid #EDEEF1' }}>
             <p style={{ fontSize: 11, color: '#94a3b8' }}>CONPAT · Sistema de Gestión Patrimonial</p>

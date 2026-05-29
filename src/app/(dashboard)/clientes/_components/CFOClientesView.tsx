@@ -34,14 +34,14 @@ export function CFOClientesView({ clientes }: Props) {
         {/* Hero banner */}
         <div style={{
           borderRadius: 16,
-          background: 'linear-gradient(135deg, #363E46 0%, #464C5E 55%, #8B2410 100%)',
+          background: 'linear-gradient(135deg, #363E46 0%, #464C5E 55%, #8B3020 100%)',
           padding: '32px 36px',
           marginBottom: 28,
           position: 'relative',
           overflow: 'hidden',
         }}>
           {/* Decorative glow */}
-          <div style={{ position: 'absolute', top: -40, right: -40, width: 200, height: 200, borderRadius: '50%', background: 'rgba(203,56,23,0.15)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: -40, right: -40, width: 200, height: 200, borderRadius: '50%', background: 'rgba(200,70,50,0.15)', pointerEvents: 'none' }} />
           <div style={{ position: 'relative', zIndex: 1 }}>
             <div style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: 10 }}>
               Panel de Trabajo Contable

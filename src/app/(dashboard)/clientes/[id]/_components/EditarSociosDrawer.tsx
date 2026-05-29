@@ -12,7 +12,7 @@ interface Props {
   onClose: () => void
 }
 
-const inputCls = 'w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:border-[#CB3817]'
+const inputCls = 'w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:border-[#C84632]'
 
 export function EditarSociosDrawer({ cliente, open, onClose }: Props) {
   const [socios, setSocios] = useState(cliente.socios.map(s => ({

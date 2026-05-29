@@ -10,11 +10,11 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          DEFAULT: '#CB3817',
-          hover:   '#C9241A',
+          DEFAULT: '#C84632',
+          hover:   '#B53C2A',
           light:   '#FFF0EC',
           border:  '#F4C5B5',
-          dark:    '#8B2410',
+          dark:    '#8B3020',
         },
         sidebar:    '#363E46',
         'cp-gray':  '#464C5E',

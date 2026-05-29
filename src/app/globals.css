@@ -3,12 +3,12 @@
 @tailwind utilities;
 
 :root {
-  --brand:          #CB3817;
-  --brand-hover:    #C9241A;
+  --brand:          #C84632;
+  --brand-hover:    #B53C2A;
   --brand-light:    #FFF0EC;
   --brand-border:   #F4C5B5;
-  --brand-dark:     #8B2410;
-  --brand-glow:     rgba(203,56,23,0.35);
+  --brand-dark:     #8B3020;
+  --brand-glow:     rgba(200,70,50,0.35);
   --sidebar-bg:     #363E46;
   --border:         #EDEEF1;
   --text-primary:   #363E46;

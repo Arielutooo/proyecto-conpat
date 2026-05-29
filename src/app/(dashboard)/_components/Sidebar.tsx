@@ -51,7 +51,7 @@ export function Sidebar({ role, userName }: SidebarProps) {
     >
       {/* Logo */}
       <div className="px-5 pt-5 pb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-        <ConpatLogo variant="white" width={118} />
+        <ConpatLogo variant="white" width={148} />
       </div>
 
       {/* Role pill */}
@@ -79,9 +79,9 @@ export function Sidebar({ role, userName }: SidebarProps) {
               style={{
                 borderRadius: 8,
                 padding: '9px 12px',
-                background: active ? '#CB3817' : 'transparent',
+                background: active ? '#C84632' : 'transparent',
                 color: active ? 'white' : 'rgba(255,255,255,0.55)',
-                boxShadow: active ? '0 0 16px rgba(203,56,23,0.35)' : 'none',
+                boxShadow: active ? '0 0 16px rgba(200,70,50,0.35)' : 'none',
                 fontSize: 13,
                 fontWeight: active ? 600 : 400,
                 textDecoration: 'none',
@@ -99,7 +99,7 @@ export function Sidebar({ role, userName }: SidebarProps) {
         <div className="flex items-center gap-3">
           <div
             className="w-8 h-8 flex items-center justify-center flex-shrink-0"
-            style={{ borderRadius: '50%', background: '#CB3817' }}
+            style={{ borderRadius: '50%', background: '#C84632' }}
           >
             <span style={{ color: 'white', fontSize: 12, fontWeight: 700 }}>{initial}</span>
           </div>

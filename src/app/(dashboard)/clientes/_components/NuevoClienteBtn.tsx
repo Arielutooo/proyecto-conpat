@@ -7,9 +7,9 @@ export function NuevoClienteBtn() {
       style={{
         display: 'inline-flex', alignItems: 'center', gap: 7,
         padding: '9px 18px', borderRadius: 8,
-        background: '#CB3817', color: 'white',
+        background: '#C84632', color: 'white',
         fontSize: 13, fontWeight: 600, textDecoration: 'none',
-        boxShadow: '0 1px 3px rgba(203,56,23,0.4)',
+        boxShadow: '0 1px 3px rgba(200,70,50,0.4)',
       }}
     >
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

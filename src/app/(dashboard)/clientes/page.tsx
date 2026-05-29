@@ -56,7 +56,7 @@ export default async function ClientesPage() {
           {stats.map(s => (
             <div key={s.label} style={{ background: 'white', borderRadius: 12, border: '1px solid #e5e8ef', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', padding: '20px 24px' }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{s.label}</div>
-              <div className="font-serif" style={{ fontSize: s.value.startsWith('$') ? 22 : 28, fontWeight: 700, color: s.accent ? '#CB3817' : '#363E46', marginTop: 8, lineHeight: 1 }}>
+              <div className="font-serif" style={{ fontSize: s.value.startsWith('$') ? 22 : 28, fontWeight: 700, color: s.accent ? '#C84632' : '#363E46', marginTop: 8, lineHeight: 1 }}>
                 {s.value}
               </div>
               <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 5 }}>{s.sub}</div>

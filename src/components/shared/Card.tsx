@@ -33,7 +33,7 @@ interface StatCardProps {
 export const StatCard = ({ label, value, sub, accent = false }: StatCardProps) => (
   <Card style={{ padding: '20px 24px' }}>
     <div style={{ fontSize: 11, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 500 }}>{label}</div>
-    <div style={{ fontSize: 26, fontWeight: 700, color: accent ? '#CB3817' : '#0f172a', marginTop: 6, fontFamily: "'DM Serif Display', serif" }}>{value}</div>
+    <div style={{ fontSize: 26, fontWeight: 700, color: accent ? '#C84632' : '#0f172a', marginTop: 6, fontFamily: "'DM Serif Display', serif" }}>{value}</div>
     {sub && <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4 }}>{sub}</div>}
   </Card>
 )

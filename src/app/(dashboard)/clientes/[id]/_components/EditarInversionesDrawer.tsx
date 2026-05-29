@@ -14,7 +14,7 @@ interface Props {
   onClose: () => void
 }
 
-const inputCls = 'w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:border-[#CB3817]'
+const inputCls = 'w-full px-3 py-2 rounded-lg border border-slate-200 text-sm bg-white focus:outline-none focus:border-[#C84632]'
 const selectCls = inputCls
 
 export function EditarInversionesDrawer({ cliente, open, anioFiscal, onClose }: Props) {

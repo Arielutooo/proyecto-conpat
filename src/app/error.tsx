@@ -24,7 +24,7 @@ export default function Error({ error, reset }: ErrorProps) {
         </div>
         <button
           onClick={reset}
-          style={{ padding: '10px 24px', background: '#CB3817', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+          style={{ padding: '10px 24px', background: '#C84632', color: 'white', border: 'none', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
         >
           Reintentar
         </button>

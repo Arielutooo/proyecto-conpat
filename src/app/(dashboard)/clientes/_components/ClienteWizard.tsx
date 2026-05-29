@@ -21,7 +21,7 @@ const INITIAL = {
   tiene_nomina: false, emite_facturas: false, boletas_honorarios: false,
 }
 
-const inputCls = 'w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-[#CB3817]'
+const inputCls = 'w-full px-3 py-2 rounded-lg border border-slate-200 text-sm focus:outline-none focus:border-[#C84632]'
 const selectCls = inputCls + ' bg-white'
 
 function WizardField({ label, children }: { label: string; children: React.ReactNode }) {

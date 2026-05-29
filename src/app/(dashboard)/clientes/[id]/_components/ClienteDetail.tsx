@@ -145,8 +145,8 @@ export function ClienteDetail({ cliente, role }: Props) {
                 cursor: 'pointer',
                 fontSize: 13,
                 fontWeight: tab === t.id ? 600 : 400,
-                color: tab === t.id ? '#0f172a' : '#6b7280',
-                borderBottom: `2px solid ${tab === t.id ? '#0f172a' : 'transparent'}`,
+                color: tab === t.id ? '#C84632' : '#6b7280',
+                borderBottom: `2px solid ${tab === t.id ? '#C84632' : 'transparent'}`,
                 display: 'flex',
                 alignItems: 'center',
                 gap: 7,
@@ -165,7 +165,7 @@ export function ClienteDetail({ cliente, role }: Props) {
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-auto" style={{ background: '#f1f5f9' }}>
+      <div className="flex-1 overflow-auto" style={{ background: '#F3F3EB' }}>
         <Tabs.Content value="legales"     className="focus:outline-none animate-slide-up" style={{ padding: 28 }}>
           <TabLegales    cliente={cliente} role={role} anioFiscal={anioFiscal} />
         </Tabs.Content>
