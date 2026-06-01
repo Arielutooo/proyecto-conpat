@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { ConpatLogo } from '@/components/ConpatLogo'
 import type { Role } from '@/lib/types'
 
 interface SidebarProps {
@@ -74,7 +73,23 @@ export function Sidebar({ role, userName }: SidebarProps) {
     >
       {/* Logo */}
       <div className="px-5 pt-5 pb-4" style={{ borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-        <ConpatLogo variant="white" width={148} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          {/* Solo el icono chevron/diamante del logo — 20×20px */}
+          <svg width="20" height="20" viewBox="3 13 22 22" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+            <path fill="#f2f2f2" d="M13.94,30.53l-5.73-5.74s-.07-.06-.11-.07c-.04-.02-.09-.02-.13-.02h-3.34s-.08.02-.11.04c-.03.03-.04.07-.04.11-.02.03-.02.07,0,.11l7.7,7.71c.49.48,1.14.75,1.82.75s1.34-.27,1.82-.75l7.78-7.71s.03-.03.04-.05c0-.02.02-.04.02-.06s0-.04-.02-.06c0-.02-.02-.04-.04-.05h-3.45c-.09,0-.18.04-.25.1l-5.73,5.74s-.08.03-.12.02c-.04,0-.08-.03-.1-.06h-.01Z"/>
+            <path fill="#f2f2f2" d="M14.16,16.5l5.73,5.74c.07.06.16.09.25.1h3.35s.08-.02.11-.04c.03-.03.04-.07.04-.11.01-.04.01-.07,0-.11l-7.77-7.7c-.24-.25-.53-.44-.84-.57-.32-.13-.66-.2-1-.2s-.68.07-1,.2-.6.33-.85.57l-7.66,7.7s-.04.07-.04.11.02.08.04.11c.03.01.07.01.11,0h3.34c.09,0,.18-.04.25-.1l5.73-5.74s.07-.04.11-.04.08.02.11.04v.04h-.01Z"/>
+            <path fill="#C84632" d="M13.72,20.14l-3.05,3.05c-.18.18-.18.48,0,.66l3.05,3.05c.18.18.48.18.66,0l3.05-3.05c.18-.18.18-.48,0-.66l-3.05-3.05c-.18-.18-.48-.18-.66,0Z"/>
+          </svg>
+          {/* Texto: CONPAT bold + Global light, alineados en baseline */}
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+            <span style={{ color: '#f2f2f2', fontSize: 16, fontWeight: 700, letterSpacing: '0.06em', lineHeight: 1 }}>
+              CONPAT
+            </span>
+            <span style={{ color: 'rgba(255,255,255,0.45)', fontSize: 12, fontWeight: 300, letterSpacing: '0.04em', lineHeight: 1 }}>
+              Global
+            </span>
+          </div>
+        </div>
       </div>
 
       {/* Role pill */}
