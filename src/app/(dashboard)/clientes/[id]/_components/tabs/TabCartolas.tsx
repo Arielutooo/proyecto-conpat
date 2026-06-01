@@ -18,8 +18,11 @@ export function TabCartolas({ cliente, role, anioFiscal }: Props) {
   const [banco, setBanco] = useState('')
   const [mes, setMes] = useState('')
   const [uploading, setUploading] = useState(false)
+  const [isDragOver, setIsDragOver] = useState(false)
+  const [dropFlash, setDropFlash] = useState(false)
   const [, startTransition] = useTransition()
   const fileRef = useRef<HTMLInputElement>(null)
+  const dragCountRef = useRef(0)
   const canEdit = role === 'admin' || role === 'master'
 
   const filtered = cartolas.filter(c => c.anio === anioFiscal)
@@ -62,11 +65,69 @@ export function TabCartolas({ cliente, role, anioFiscal }: Props) {
     })
   }
 
+  const canReceiveDrop = canEdit && !uploading
+  const handleDragEnter = (e: React.DragEvent) => {
+    if (!canReceiveDrop) return
+    e.preventDefault()
+    dragCountRef.current++
+    if (dragCountRef.current === 1) setIsDragOver(true)
+  }
+  const handleDragLeave = (e: React.DragEvent) => {
+    if (!canReceiveDrop) return
+    e.preventDefault()
+    dragCountRef.current--
+    if (dragCountRef.current === 0) setIsDragOver(false)
+  }
+  const handleDragOver = (e: React.DragEvent) => {
+    if (!canReceiveDrop) return
+    e.preventDefault()
+  }
+  const handleDrop = (e: React.DragEvent) => {
+    if (!canReceiveDrop) return
+    e.preventDefault()
+    dragCountRef.current = 0
+    setIsDragOver(false)
+    const file = e.dataTransfer.files[0]
+    if (!file) return
+    setDropFlash(true)
+    setTimeout(() => { setDropFlash(false); handleUpload(file) }, 200)
+  }
+
   return (
     <div className="space-y-6 max-w-2xl">
       {/* Formulario de subida */}
       {canEdit && (
-        <div className="bg-white rounded-xl border border-slate-200 p-5">
+        <div
+          className="bg-white rounded-xl border border-slate-200 p-5"
+          style={{
+            position: 'relative',
+            ...(dropFlash
+              ? { border: '2px solid #16a34a', background: '#f0fdf4' }
+              : isDragOver
+              ? { border: '2px solid #C84632', background: 'rgba(200,70,50,0.05)' }
+              : {})
+          }}
+          onDragEnter={handleDragEnter}
+          onDragLeave={handleDragLeave}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+        >
+          {isDragOver && (
+            <div style={{
+              position: 'absolute', inset: 0, borderRadius: 12, zIndex: 10,
+              background: 'rgba(200,70,50,0.08)', display: 'flex', flexDirection: 'column',
+              alignItems: 'center', justifyContent: 'center', gap: 8, pointerEvents: 'none',
+            }}>
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                stroke="#C84632" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                <path d="M17 8l-5-5-5 5M12 3v12" />
+              </svg>
+              <span style={{ fontSize: 13, fontWeight: 700, color: '#C84632', letterSpacing: '0.01em' }}>
+                Suelta para subir
+              </span>
+            </div>
+          )}
           <h3 className="text-xs font-semibold text-slate-500 uppercase tracking-widest mb-4">
             Subir Cartola — {anioFiscal}
           </h3>

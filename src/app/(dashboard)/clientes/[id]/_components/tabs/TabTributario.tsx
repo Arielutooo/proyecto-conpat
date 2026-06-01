@@ -24,17 +24,28 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
   const [uploadingF29, setUploadingF29] = useState<string | null>(null)
   const [uploadingCert, setUploadingCert] = useState<string | null>(null)
   const [uploadingEntregable, setUploadingEntregable] = useState(false)
-  const [selectedMesIdx, setSelectedMesIdx] = useState(0) // Mes seleccionado para F29
+  const [selectedMesIdx, setSelectedMesIdx] = useState(0)
   const [tipoEntregable, setTipoEntregable] = useState('')
-  
+
   const [entregables, setEntregables] = useState<EntregableCFO[]>(
     cliente.entregables || []
   )
-  
+
   const [certificados, setCertificados] = useState<CertificadoRetiroAnual[]>(
     cliente.socios.flatMap(s => s.certificados || [])
   )
-  
+
+  // drag & drop state
+  const [isDragOverDoc, setIsDragOverDoc] = useState<string | null>(null)
+  const [dropFlashDoc, setDropFlashDoc] = useState<string | null>(null)
+  const [isDragOverF29, setIsDragOverF29] = useState(false)
+  const [dropFlashF29, setDropFlashF29] = useState(false)
+  const [isDragOverEntregable, setIsDragOverEntregable] = useState(false)
+  const [dropFlashEntregable, setDropFlashEntregable] = useState(false)
+  const dragCountDocRef = useRef<Record<string, number>>({})
+  const dragCountF29Ref = useRef(0)
+  const dragCountEntregableRef = useRef(0)
+
   const [, startTransition] = useTransition()
   const docInputRef = useRef<HTMLInputElement>(null)
   const f29InputRef = useRef<HTMLInputElement>(null)
@@ -53,31 +64,31 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
   const handleUploadGeneric = async (file: File, key: string, isF29: boolean) => {
     const setLoader = isF29 ? setUploadingF29 : setUploadingDoc
     setLoader(key)
-    
+
     const supabase = createClient()
     const ext = file.name.split('.').pop()
     const path = `tributario/${cliente.id}/${anioFiscal}/${key}_${Date.now()}.${ext}`
-    
+
     const { data, error } = await supabase.storage.from('documentos_patrimoniales').upload(path, file, { upsert: false })
-    
+
     if (error) {
       setLoader(null)
       alert(error.message)
       return
     }
-    
+
     const { data: { publicUrl } } = supabase.storage.from('documentos_patrimoniales').getPublicUrl(data.path)
-    
+
     startTransition(async () => {
       const existing = getDoc(key)
       if (existing) await deleteDocumento(existing.id, cliente.id)
-      
+
       const result = await createDocumento({
         cliente_id: cliente.id, categoria: 'tributario',
         tipo_documento: key, anio: anioFiscal,
         archivo_url: publicUrl, archivo_nombre: file.name,
       })
-      
+
       if (result.id) {
         setDocs(prev => [
           ...prev.filter(d => !(d.tipo_documento === key && d.anio === anioFiscal)),
@@ -100,7 +111,7 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
     const supabase = createClient()
     const ext = file.name.split('.').pop()
     const path = `tributario/${cliente.id}/certificados/${anioFiscal}/${socioId}_${Date.now()}.${ext}`
-    
+
     const { data, error } = await supabase.storage.from('documentos_patrimoniales').upload(path, file, { upsert: false })
     if (error) {
       setUploadingCert(null)
@@ -108,11 +119,11 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
       return
     }
     const { data: { publicUrl } } = supabase.storage.from('documentos_patrimoniales').getPublicUrl(data.path)
-    
+
     startTransition(async () => {
       const existing = certificados.find(c => c.socio_id === socioId && c.anio === anioFiscal)
       if (existing) await deleteCertificado(existing.id)
-      
+
       const result = await createCertificado({ socio_id: socioId, anio: anioFiscal, archivo_url: publicUrl, archivo_nombre: file.name })
       if (result.id) {
         setCertificados(prev => [
@@ -136,16 +147,16 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
     setUploadingEntregable(true)
     const supabase = createClient()
     const path = `entregables/${cliente.id}/${anioFiscal}/${tipoEntregable.replace(/\s/g, '_')}_${Date.now()}.${file.name.split('.').pop()}`
-    
+
     const { data, error } = await supabase.storage.from('documentos_patrimoniales').upload(path, file, { upsert: false })
     if (error) {
       setUploadingEntregable(false)
       alert(error.message)
       return
     }
-    
+
     const { data: { publicUrl } } = supabase.storage.from('documentos_patrimoniales').getPublicUrl(data.path)
-    
+
     startTransition(async () => {
       const result = await createEntregableCFO({
         cliente_id: cliente.id,
@@ -155,11 +166,11 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
         archivo_url: publicUrl,
         archivo_nombre: file.name,
       })
-      
+
       if (result.id) {
         setEntregables(prev => [...prev, {
-          id: result.id!, cliente_id: cliente.id, tipo_documento: tipoEntregable, 
-          anio: anioFiscal, mes: null, archivo_url: publicUrl, 
+          id: result.id!, cliente_id: cliente.id, tipo_documento: tipoEntregable,
+          anio: anioFiscal, mes: null, archivo_url: publicUrl,
           archivo_nombre: file.name, created_at: new Date().toISOString()
         }])
         setTipoEntregable('')
@@ -196,13 +207,62 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
           {DOCS_TRIBUTARIOS.map(({ key, label }) => {
             const doc = getDoc(key)
             const isLoading = uploadingDoc === key
+            const isRowDragOver = isDragOverDoc === key && !doc && canEdit
+            const isRowFlash = dropFlashDoc === key
 
             return (
-              <div key={key} className="p-5 flex items-center gap-4 hover:bg-slate-50/50 transition-colors">
+              <div
+                key={key}
+                className="p-5 flex items-center gap-4 hover:bg-slate-50/50 transition-colors"
+                style={{
+                  position: 'relative',
+                  ...(isRowFlash
+                    ? { background: '#f0fdf4', boxShadow: 'inset 0 0 0 2px #16a34a' }
+                    : isRowDragOver
+                    ? { background: 'rgba(200,70,50,0.05)', boxShadow: 'inset 0 0 0 2px #C84632' }
+                    : {})
+                }}
+                onDragEnter={!doc && canEdit ? (e) => {
+                  e.preventDefault()
+                  dragCountDocRef.current[key] = (dragCountDocRef.current[key] ?? 0) + 1
+                  if (dragCountDocRef.current[key] === 1) setIsDragOverDoc(key)
+                } : undefined}
+                onDragLeave={!doc && canEdit ? (e) => {
+                  e.preventDefault()
+                  dragCountDocRef.current[key] = (dragCountDocRef.current[key] ?? 1) - 1
+                  if (dragCountDocRef.current[key] === 0) setIsDragOverDoc(null)
+                } : undefined}
+                onDragOver={!doc && canEdit ? (e) => { e.preventDefault() } : undefined}
+                onDrop={!doc && canEdit ? (e) => {
+                  e.preventDefault()
+                  dragCountDocRef.current[key] = 0
+                  setIsDragOverDoc(null)
+                  const file = e.dataTransfer.files[0]
+                  if (!file) return
+                  setDropFlashDoc(key)
+                  setTimeout(() => { setDropFlashDoc(null); handleUploadGeneric(file, key, false) }, 200)
+                } : undefined}
+              >
+                {isRowDragOver && (
+                  <div style={{
+                    position: 'absolute', inset: 0, zIndex: 10,
+                    background: 'rgba(200,70,50,0.08)', display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', justifyContent: 'center', gap: 8, pointerEvents: 'none',
+                  }}>
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                      stroke="#C84632" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                      <path d="M17 8l-5-5-5 5M12 3v12" />
+                    </svg>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#C84632', letterSpacing: '0.01em' }}>
+                      Suelta para subir
+                    </span>
+                  </div>
+                )}
                 <div className={`w-10 h-10 rounded-lg flex-shrink-0 flex items-center justify-center ${doc ? 'bg-slate-50 border border-slate-200 text-slate-600' : 'bg-amber-50 border border-amber-100 text-amber-500'}`}>
                    <FileText size={20} />
                 </div>
-                
+
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="text-[14px] font-bold text-slate-900">{label}</h3>
@@ -235,7 +295,7 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
                     </>
                   ) : (
                     canEdit && (
-                      <button 
+                      <button
                         onClick={() => { pendingDocKey.current = key; if (docInputRef.current) docInputRef.current.click() }}
                         disabled={isLoading}
                         className="flex items-center gap-2 px-4 py-2 bg-slate-50 hover:bg-white border border-slate-200 text-blue-600 text-[13px] font-semibold rounded-lg shadow-sm transition-all disabled:opacity-50"
@@ -250,13 +310,13 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
             )
           })}
         </div>
-        <input 
-          ref={docInputRef} type="file" accept=".pdf,.xls,.xlsx,.png,.jpg" className="hidden" 
+        <input
+          ref={docInputRef} type="file" accept=".pdf,.xls,.xlsx,.png,.jpg" className="hidden"
           onChange={e => {
              const file = e.target.files?.[0]
              if (file && pendingDocKey.current) handleUploadGeneric(file, pendingDocKey.current, false)
              e.target.value = ''
-          }} 
+          }}
         />
       </div>
 
@@ -268,18 +328,56 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
         </div>
 
         {canEdit && (
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-6 flex gap-4 items-center">
+          <div
+            className="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-6 flex gap-4 items-center"
+            style={{
+              position: 'relative',
+              ...(dropFlashF29
+                ? { border: '2px solid #16a34a', background: '#f0fdf4' }
+                : isDragOverF29
+                ? { border: '2px solid #C84632', background: 'rgba(200,70,50,0.05)' }
+                : {})
+            }}
+            onDragEnter={(e) => { e.preventDefault(); dragCountF29Ref.current++; if (dragCountF29Ref.current === 1) setIsDragOverF29(true) }}
+            onDragLeave={(e) => { e.preventDefault(); dragCountF29Ref.current--; if (dragCountF29Ref.current === 0) setIsDragOverF29(false) }}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault()
+              dragCountF29Ref.current = 0
+              setIsDragOverF29(false)
+              const file = e.dataTransfer.files[0]
+              if (!file) return
+              setDropFlashF29(true)
+              setTimeout(() => { setDropFlashF29(false); handleUploadGeneric(file, F29_KEYS[selectedMesIdx], true) }, 200)
+            }}
+          >
+            {isDragOverF29 && (
+              <div style={{
+                position: 'absolute', inset: 0, borderRadius: 12, zIndex: 10,
+                background: 'rgba(200,70,50,0.08)', display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center', gap: 8, pointerEvents: 'none',
+              }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                  stroke="#C84632" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                  <path d="M17 8l-5-5-5 5M12 3v12" />
+                </svg>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#C84632', letterSpacing: '0.01em' }}>
+                  Suelta para subir
+                </span>
+              </div>
+            )}
             <div className="w-48">
               <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Mes a declarar</label>
-              <select 
+              <select
                 className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[13px] text-slate-900 outline-none font-medium"
                 value={selectedMesIdx} onChange={e => setSelectedMesIdx(Number(e.target.value))}
               >
                 {MESES.map((m, i) => <option key={i} value={i}>{m}</option>)}
               </select>
             </div>
-            
-            <div 
+
+            <div
               onClick={() => f29InputRef.current?.click()}
               className="flex-1 bg-white border border-dashed border-slate-300 rounded-lg h-14 flex items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-colors"
             >
@@ -287,8 +385,8 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
                 <FileText size={16} /> Seleccionar F29 (PDF)...
               </span>
             </div>
-            
-            <button 
+
+            <button
               className="bg-blue-600 hover:bg-blue-700 text-white h-14 px-6 rounded-lg font-semibold text-[13px] flex items-center gap-2 transition-colors disabled:opacity-50"
               onClick={() => f29InputRef.current?.click()}
               disabled={uploadingF29 !== null}
@@ -297,13 +395,13 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
               Subir F29
             </button>
 
-            <input 
-              ref={f29InputRef} type="file" accept=".pdf" className="hidden" 
+            <input
+              ref={f29InputRef} type="file" accept=".pdf" className="hidden"
               onChange={e => {
                  const file = e.target.files?.[0]
                  if (file) handleUploadGeneric(file, F29_KEYS[selectedMesIdx], true)
                  e.target.value = ''
-              }} 
+              }}
             />
           </div>
         )}
@@ -354,7 +452,7 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
           {cliente.socios.map(socio => {
             const cert = certificados.find(c => c.socio_id === socio.id && c.anio === anioFiscal)
             const isLoading = uploadingCert === socio.id
-            
+
             return (
               <div key={socio.id} className="bg-white border border-slate-200 rounded-xl p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
                 <div className="flex items-center gap-4">
@@ -404,13 +502,13 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
           )}
         </div>
 
-        <input 
-          ref={certInputRef} type="file" accept=".pdf" className="hidden" 
+        <input
+          ref={certInputRef} type="file" accept=".pdf" className="hidden"
           onChange={e => {
              const file = e.target.files?.[0]
              if (file && pendingSocioId.current) handleUploadCertificado(file, pendingSocioId.current)
              e.target.value = ''
-          }} 
+          }}
         />
       </div>
 
@@ -422,10 +520,48 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
         </div>
 
         {canEdit && (
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-6 flex gap-4 items-center">
+          <div
+            className="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-6 flex gap-4 items-center"
+            style={{
+              position: 'relative',
+              ...(dropFlashEntregable
+                ? { border: '2px solid #16a34a', background: '#f0fdf4' }
+                : isDragOverEntregable
+                ? { border: '2px solid #C84632', background: 'rgba(200,70,50,0.05)' }
+                : {})
+            }}
+            onDragEnter={(e) => { e.preventDefault(); dragCountEntregableRef.current++; if (dragCountEntregableRef.current === 1) setIsDragOverEntregable(true) }}
+            onDragLeave={(e) => { e.preventDefault(); dragCountEntregableRef.current--; if (dragCountEntregableRef.current === 0) setIsDragOverEntregable(false) }}
+            onDragOver={(e) => e.preventDefault()}
+            onDrop={(e) => {
+              e.preventDefault()
+              dragCountEntregableRef.current = 0
+              setIsDragOverEntregable(false)
+              const file = e.dataTransfer.files[0]
+              if (!file) return
+              setDropFlashEntregable(true)
+              setTimeout(() => { setDropFlashEntregable(false); handleUploadEntregable(file) }, 200)
+            }}
+          >
+            {isDragOverEntregable && (
+              <div style={{
+                position: 'absolute', inset: 0, borderRadius: 12, zIndex: 10,
+                background: 'rgba(200,70,50,0.08)', display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center', gap: 8, pointerEvents: 'none',
+              }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                  stroke="#C84632" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                  <path d="M17 8l-5-5-5 5M12 3v12" />
+                </svg>
+                <span style={{ fontSize: 13, fontWeight: 700, color: '#C84632', letterSpacing: '0.01em' }}>
+                  Suelta para subir
+                </span>
+              </div>
+            )}
             <div className="w-64">
               <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Tipo de Documento</label>
-              <select 
+              <select
                 className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[13px] text-slate-900 outline-none font-medium"
                 value={tipoEntregable} onChange={e => setTipoEntregable(e.target.value)}
               >
@@ -433,8 +569,8 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
                 {TIPO_ENTREGABLE_OPTIONS.map((t, i) => <option key={i} value={t}>{t}</option>)}
               </select>
             </div>
-            
-            <div 
+
+            <div
               onClick={() => entregableRef.current?.click()}
               className="flex-1 bg-white border border-dashed border-slate-300 rounded-lg h-14 flex items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-colors"
             >
@@ -442,8 +578,8 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
                 <FileText size={16} /> Seleccionar Archivo (PDF, Excel)...
               </span>
             </div>
-            
-            <button 
+
+            <button
               className="bg-blue-600 hover:bg-blue-700 text-white h-14 px-6 rounded-lg font-semibold text-[13px] flex items-center gap-2 transition-colors disabled:opacity-50"
               onClick={() => entregableRef.current?.click()}
               disabled={uploadingEntregable || !tipoEntregable}
@@ -452,13 +588,13 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
               Subir Entregable
             </button>
 
-            <input 
-              ref={entregableRef} type="file" accept=".pdf,.xlsx,.xls,.docx,.jpg,.jpeg,.png" className="hidden" 
+            <input
+              ref={entregableRef} type="file" accept=".pdf,.xlsx,.xls,.docx,.jpg,.jpeg,.png" className="hidden"
               onChange={e => {
                  const file = e.target.files?.[0]
                  if (file) handleUploadEntregable(file)
                  e.target.value = ''
-              }} 
+              }}
             />
           </div>
         )}

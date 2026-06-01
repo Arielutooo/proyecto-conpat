@@ -13,10 +13,6 @@ interface Props {
   anioFiscal: number
 }
 
-// Wrapper local para permitir múltiples archivos por categoría en la UI (aunque DOCS_RRHH define keys únicos por categoría, 
-// el schema permite múltiples si se usa un key base y variaciones o simplemente filtrando por tipo_documento.
-// Asumimos que `tipo_documento` será ej: "contratos", "liquidaciones", etc.
-
 export function TabRRHH({ cliente, role, anioFiscal }: Props) {
   const [docs, setDocs] = useState<Documento[]>(
     cliente.documentos.filter(d => d.categoria === 'rrhh')
@@ -25,11 +21,14 @@ export function TabRRHH({ cliente, role, anioFiscal }: Props) {
   const [openCategories, setOpenCategories] = useState<Record<string, boolean>>({
     contratos: true, liquidaciones: true
   })
-  
+  const [isDragOverCat, setIsDragOverCat] = useState<Record<string, boolean>>({})
+  const [dropFlashCat, setDropFlashCat] = useState<Record<string, boolean>>({})
+  const dragCountCatRef = useRef<Record<string, number>>({})
+
   const [, startTransition] = useTransition()
   const fileInputRef = useRef<HTMLInputElement>(null)
   const pendingCategory = useRef<string | null>(null)
-  
+
   const canEdit = role === 'admin' || role === 'master'
 
   const toggleCategory = (key: string) => {
@@ -40,26 +39,25 @@ export function TabRRHH({ cliente, role, anioFiscal }: Props) {
     setUploadingDoc(categoriaKey)
     const supabase = createClient()
     const ext = file.name.split('.').pop()
-    // Path incluye timestamp para que no colisionen múltiples archivos de la misma categoría
     const path = `rrhh/${cliente.id}/${anioFiscal}/${categoriaKey}_${Date.now()}.${ext}`
-    
+
     const { data, error } = await supabase.storage.from('documentos_patrimoniales').upload(path, file, { upsert: false })
-    
+
     if (error) {
       setUploadingDoc(null)
       alert(error.message)
       return
     }
-    
+
     const { data: { publicUrl } } = supabase.storage.from('documentos_patrimoniales').getPublicUrl(data.path)
-    
+
     startTransition(async () => {
       const result = await createDocumento({
         cliente_id: cliente.id, categoria: 'rrhh',
         tipo_documento: categoriaKey, anio: anioFiscal,
         archivo_url: publicUrl, archivo_nombre: file.name,
       })
-      
+
       if (result.id) {
         setDocs(prev => [
           ...prev,
@@ -82,7 +80,7 @@ export function TabRRHH({ cliente, role, anioFiscal }: Props) {
       <div className="mb-6">
         <h2 className="text-[16px] font-bold text-slate-900">Documentos RRHH — Período Fiscal {anioFiscal}</h2>
         <p className="text-[13px] text-slate-500 mt-1">Nómina, contratos y comprobantes laborales.</p>
-        
+
         {!cliente.tiene_nomina && (
           <div className="mt-4 bg-amber-50 border border-amber-200 text-amber-700 px-4 py-3 rounded-lg text-[13px]">
             El cliente no tiene habilitada la nómina de trabajadores en su perfil.
@@ -95,6 +93,8 @@ export function TabRRHH({ cliente, role, anioFiscal }: Props) {
           const categoryDocs = docs.filter(d => d.tipo_documento === key && d.anio === anioFiscal)
           const isOpen = openCategories[key]
           const isUploading = uploadingDoc === key
+          const isCatDragOver = isDragOverCat[key] && canEdit
+          const isCatFlash = dropFlashCat[key]
 
           return (
             <div key={key} className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden transition-all">
@@ -111,7 +111,7 @@ export function TabRRHH({ cliente, role, anioFiscal }: Props) {
                 </div>
                 <div className="flex items-center gap-4">
                   {canEdit && (
-                    <button 
+                    <button
                       onClick={(e) => {
                         e.stopPropagation()
                         pendingCategory.current = key
@@ -120,7 +120,7 @@ export function TabRRHH({ cliente, role, anioFiscal }: Props) {
                       disabled={isUploading}
                       className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 bg-white text-[12px] font-bold text-blue-600 hover:border-blue-300 hover:bg-blue-50 transition-colors shadow-sm disabled:opacity-50"
                     >
-                      {isUploading ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />} 
+                      {isUploading ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
                       Agregar
                     </button>
                   )}
@@ -132,7 +132,56 @@ export function TabRRHH({ cliente, role, anioFiscal }: Props) {
 
               {/* Accordion Body */}
               {isOpen && (
-                <div className="border-t border-slate-100 bg-white">
+                <div
+                  className="border-t border-slate-100 bg-white"
+                  style={{
+                    position: 'relative',
+                    ...(isCatFlash
+                      ? { background: '#f0fdf4', boxShadow: 'inset 0 0 0 2px #16a34a' }
+                      : isCatDragOver
+                      ? { background: 'rgba(200,70,50,0.05)', boxShadow: 'inset 0 0 0 2px #C84632' }
+                      : {})
+                  }}
+                  onDragEnter={canEdit ? (e) => {
+                    e.preventDefault()
+                    dragCountCatRef.current[key] = (dragCountCatRef.current[key] ?? 0) + 1
+                    if (dragCountCatRef.current[key] === 1) setIsDragOverCat(p => ({ ...p, [key]: true }))
+                  } : undefined}
+                  onDragLeave={canEdit ? (e) => {
+                    e.preventDefault()
+                    dragCountCatRef.current[key] = (dragCountCatRef.current[key] ?? 1) - 1
+                    if (dragCountCatRef.current[key] === 0) setIsDragOverCat(p => ({ ...p, [key]: false }))
+                  } : undefined}
+                  onDragOver={canEdit ? (e) => { e.preventDefault() } : undefined}
+                  onDrop={canEdit ? (e) => {
+                    e.preventDefault()
+                    dragCountCatRef.current[key] = 0
+                    setIsDragOverCat(p => ({ ...p, [key]: false }))
+                    const file = e.dataTransfer.files[0]
+                    if (!file) return
+                    setDropFlashCat(p => ({ ...p, [key]: true }))
+                    setTimeout(() => {
+                      setDropFlashCat(p => ({ ...p, [key]: false }))
+                      handleUpload(file, key)
+                    }, 200)
+                  } : undefined}
+                >
+                  {isCatDragOver && (
+                    <div style={{
+                      position: 'absolute', inset: 0, zIndex: 10,
+                      background: 'rgba(200,70,50,0.08)', display: 'flex', flexDirection: 'column',
+                      alignItems: 'center', justifyContent: 'center', gap: 8, pointerEvents: 'none',
+                    }}>
+                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+                        stroke="#C84632" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+                        <path d="M17 8l-5-5-5 5M12 3v12" />
+                      </svg>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: '#C84632', letterSpacing: '0.01em' }}>
+                        Suelta para subir
+                      </span>
+                    </div>
+                  )}
                   {categoryDocs.length === 0 ? (
                     <div className="p-8 text-center">
                       <p className="text-[13px] text-slate-400 font-medium">Sin archivos para {anioFiscal}</p>
@@ -166,13 +215,13 @@ export function TabRRHH({ cliente, role, anioFiscal }: Props) {
         })}
       </div>
 
-      <input 
-        ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.png" className="hidden" 
+      <input
+        ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.png" className="hidden"
         onChange={e => {
            const file = e.target.files?.[0]
            if (file && pendingCategory.current) handleUpload(file, pendingCategory.current)
            e.target.value = ''
-        }} 
+        }}
       />
     </div>
   )
