@@ -3,8 +3,13 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { checkLoginAttempts, recordFailedAttempt, resetAttempts } from '@/lib/actions/login-attempts'
 
-export function LoginForm() {
+interface Props {
+  sessionExpired?: boolean
+}
+
+export function LoginForm({ sessionExpired = false }: Props) {
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [error, setError]       = useState<string | null>(null)
@@ -15,9 +20,27 @@ export function LoginForm() {
     e.preventDefault()
     setError(null)
     startTransition(async () => {
+      // 1. Verificar si el email está bloqueado
+      const check = await checkLoginAttempts(email)
+      if (check.blocked) {
+        const mins = check.minutesLeft ?? 1
+        setError(`Demasiados intentos fallidos. Intenta nuevamente en ${mins} ${mins === 1 ? 'minuto' : 'minutos'}.`)
+        return
+      }
+
+      // 2. Intentar login
       const supabase = createClient()
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) { setError('Correo o contraseña incorrectos.'); return }
+      const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password })
+
+      if (authError) {
+        await recordFailedAttempt(email)
+        setError('Correo o contraseña incorrectos.')
+        return
+      }
+
+      // 3. Login exitoso: limpiar intentos
+      await resetAttempts(email)
+
       const mustChange = data.user?.user_metadata?.must_change_password === true
       router.push(mustChange ? '/cambiar-contrasena' : '/clientes')
       router.refresh()
@@ -39,6 +62,15 @@ export function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {sessionExpired && !error && (
+        <div style={{ background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#c2410c', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
+          </svg>
+          Tu sesión ha expirado. Inicia sesión nuevamente.
+        </div>
+      )}
+
       <div>
         <label style={{ display: 'block', fontSize: 12, fontWeight: 500, color: '#374151', marginBottom: 5 }}>
           Correo electrónico <span style={{ color: '#ef4444' }}>*</span>

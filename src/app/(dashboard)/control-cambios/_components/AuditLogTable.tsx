@@ -1,7 +1,9 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import type { AuditLog } from '@/lib/types'
+
+const PAGE_SIZE = 30
 
 const ENTITY_LABELS: Record<string, string> = {
   cliente:            'Cliente',
@@ -58,11 +60,15 @@ interface Props {
 }
 
 export function AuditLogTable({ logs, entityTypes }: Props) {
-  const [search,       setSearch]       = useState('')
+  const [search,        setSearch]        = useState('')
   const [empresaFilter, setEmpresaFilter] = useState('')
-  const [entityFilter, setEntityFilter] = useState('todos')
-  const [dateFrom,     setDateFrom]     = useState('')
-  const [dateTo,       setDateTo]       = useState('')
+  const [entityFilter,  setEntityFilter]  = useState('todos')
+  const [dateFrom,      setDateFrom]      = useState('')
+  const [dateTo,        setDateTo]        = useState('')
+  const [page,          setPage]          = useState(1)
+
+  // Volver a página 1 cuando cambia cualquier filtro
+  useEffect(() => { setPage(1) }, [search, empresaFilter, entityFilter, dateFrom, dateTo])
 
   const hasFilter = search || empresaFilter || entityFilter !== 'todos' || dateFrom || dateTo
 
@@ -81,6 +87,11 @@ export function AuditLogTable({ logs, entityTypes }: Props) {
     })
   }, [logs, entityFilter, search, empresaFilter, dateFrom, dateTo])
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const safePage   = Math.min(page, totalPages)
+  const pageStart  = (safePage - 1) * PAGE_SIZE
+  const paginated  = filtered.slice(pageStart, pageStart + PAGE_SIZE)
+
   const inputStyle: React.CSSProperties = {
     border: '1px solid #e2e8f0',
     borderRadius: 8,
@@ -97,6 +108,13 @@ export function AuditLogTable({ logs, entityTypes }: Props) {
     (e.target.style.borderColor = '#C84632')
   const blurGray = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement>) =>
     (e.target.style.borderColor = '#e2e8f0')
+
+  const btnPage: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', gap: 6,
+    padding: '8px 16px', borderRadius: 8, fontSize: 13, fontWeight: 500,
+    border: '1px solid #e2e8f0', background: 'white', cursor: 'pointer',
+    color: '#475569', transition: 'all .15s',
+  }
 
   return (
     <div>
@@ -181,6 +199,7 @@ export function AuditLogTable({ logs, entityTypes }: Props) {
       <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 12 }}>
         {filtered.length} {filtered.length === 1 ? 'registro' : 'registros'}
         {filtered.length < logs.length && ` (de ${logs.length} totales)`}
+        {totalPages > 1 && ` · mostrando ${pageStart + 1}–${Math.min(pageStart + PAGE_SIZE, filtered.length)}`}
       </div>
 
       {/* Table */}
@@ -190,52 +209,85 @@ export function AuditLogTable({ logs, entityTypes }: Props) {
             No hay registros que coincidan con los filtros.
           </div>
         ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  {['Fecha y hora', 'Usuario', 'Empresa', 'Descripción', 'Entidad'].map(h => (
-                    <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', whiteSpace: 'nowrap' }}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((log, i) => {
-                  const ec      = ENTITY_COLORS[log.entity_type] ?? { bg: '#f8fafc', text: '#475569' }
-                  const empresa = getEmpresa(log)
-                  return (
-                    <tr
-                      key={log.id}
-                      style={{ borderBottom: i < filtered.length - 1 ? '1px solid #f8fafc' : 'none', transition: 'background .1s' }}
-                      onMouseEnter={e => (e.currentTarget.style.background = '#fafafa')}
-                      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                    >
-                      <td style={{ padding: '12px 16px', fontSize: 12, color: '#64748b', whiteSpace: 'nowrap', fontFamily: 'monospace' }}>
-                        {formatDateCL(log.created_at)}
-                      </td>
-                      <td style={{ padding: '12px 16px', fontSize: 12, color: '#475569', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {log.user_email}
-                      </td>
-                      <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: empresa !== '—' ? 500 : 400, color: empresa !== '—' ? '#0f172a' : '#94a3b8', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {empresa}
-                      </td>
-                      <td style={{ padding: '12px 16px', fontSize: 13, color: '#0f172a' }}>
-                        <span style={{ marginRight: 8, fontSize: 11, color: '#94a3b8' }}>{getActionIcon(log.action)}</span>
-                        {log.description}
-                      </td>
-                      <td style={{ padding: '12px 16px' }}>
-                        <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 9px', borderRadius: 99, fontSize: 11, fontWeight: 500, background: ec.bg, color: ec.text, whiteSpace: 'nowrap' }}>
-                          {ENTITY_LABELS[log.entity_type] ?? log.entity_type}
-                        </span>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+          <>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    {['Fecha y hora', 'Usuario', 'Empresa', 'Descripción', 'Entidad'].map(h => (
+                      <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: 11, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.07em', whiteSpace: 'nowrap' }}>
+                        {h}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginated.map((log, i) => {
+                    const ec      = ENTITY_COLORS[log.entity_type] ?? { bg: '#f8fafc', text: '#475569' }
+                    const empresa = getEmpresa(log)
+                    return (
+                      <tr
+                        key={log.id}
+                        style={{ borderBottom: i < paginated.length - 1 ? '1px solid #f8fafc' : 'none', transition: 'background .1s' }}
+                        onMouseEnter={e => (e.currentTarget.style.background = '#fafafa')}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                      >
+                        <td style={{ padding: '12px 16px', fontSize: 12, color: '#64748b', whiteSpace: 'nowrap', fontFamily: 'monospace' }}>
+                          {formatDateCL(log.created_at)}
+                        </td>
+                        <td style={{ padding: '12px 16px', fontSize: 12, color: '#475569', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {log.user_email}
+                        </td>
+                        <td style={{ padding: '12px 16px', fontSize: 13, fontWeight: empresa !== '—' ? 500 : 400, color: empresa !== '—' ? '#0f172a' : '#94a3b8', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {empresa}
+                        </td>
+                        <td style={{ padding: '12px 16px', fontSize: 13, color: '#0f172a' }}>
+                          <span style={{ marginRight: 8, fontSize: 11, color: '#94a3b8' }}>{getActionIcon(log.action)}</span>
+                          {log.description}
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 9px', borderRadius: 99, fontSize: 11, fontWeight: 500, background: ec.bg, color: ec.text, whiteSpace: 'nowrap' }}>
+                            {ENTITY_LABELS[log.entity_type] ?? log.entity_type}
+                          </span>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination controls */}
+            {totalPages > 1 && (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, padding: '14px 20px', borderTop: '1px solid #f1f5f9' }}>
+                <button
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  disabled={safePage === 1}
+                  style={{ ...btnPage, opacity: safePage === 1 ? 0.4 : 1, cursor: safePage === 1 ? 'default' : 'pointer' }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M15 18l-6-6 6-6" />
+                  </svg>
+                  Anterior
+                </button>
+
+                <span style={{ fontSize: 13, color: '#475569', fontWeight: 500, minWidth: 110, textAlign: 'center' }}>
+                  Página {safePage} de {totalPages}
+                </span>
+
+                <button
+                  onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                  disabled={safePage === totalPages}
+                  style={{ ...btnPage, opacity: safePage === totalPages ? 0.4 : 1, cursor: safePage === totalPages ? 'default' : 'pointer' }}
+                >
+                  Siguiente
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 18l6-6-6-6" />
+                  </svg>
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

@@ -1,7 +1,9 @@
 import { ConpatLogo } from '@/components/ConpatLogo'
 import { LoginForm } from './_components/LoginForm'
 
-export default function LoginPage() {
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ session?: string }> }) {
+  const params         = await searchParams
+  const sessionExpired = params.session === 'expired'
   return (
     <>
       {/* Left dark panel */}
@@ -51,7 +53,7 @@ export default function LoginPage() {
         <div className="w-full max-w-sm">
           <h2 className="text-xl font-bold mb-1.5" style={{ color: '#363E46' }}>Iniciar sesión</h2>
           <p className="text-sm mb-7" style={{ color: '#464C5E' }}>Ingresa tus credenciales para acceder al sistema.</p>
-          <LoginForm />
+          <LoginForm sessionExpired={sessionExpired} />
           <div className="mt-8 pt-6 text-center" style={{ borderTop: '1px solid #EDEEF1' }}>
             <p style={{ fontSize: 11, color: '#94a3b8' }}>CONPAT · Sistema de Gestión Patrimonial</p>
           </div>
