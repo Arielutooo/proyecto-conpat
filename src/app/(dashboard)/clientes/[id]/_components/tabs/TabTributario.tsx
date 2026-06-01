@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition, useRef } from 'react'
-import { Upload, Loader2, FileText, Trash2, Eye, CheckCircle2 } from 'lucide-react'
+import { Upload, Loader2, FileText, Trash2, Eye, CheckCircle2, X } from 'lucide-react'
 import { createDocumento, deleteDocumento, createEntregableCFO, deleteEntregableCFO } from '@/lib/actions/documentos'
 import { createClient } from '@/lib/supabase/client'
 import { createCertificado, deleteCertificado } from '@/lib/actions/certificados'
@@ -27,6 +27,12 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
   const [selectedMesIdx, setSelectedMesIdx] = useState(0)
   const [tipoEntregable, setTipoEntregable] = useState('')
 
+  // archivos en espera (staged) — no se suben hasta confirmar
+  const [pendingF29, setPendingF29] = useState<File | null>(null)
+  const [pendingEntregable, setPendingEntregable] = useState<File | null>(null)
+  const [f29Error, setF29Error] = useState<string | null>(null)
+  const [entregableError, setEntregableError] = useState<string | null>(null)
+
   const [entregables, setEntregables] = useState<EntregableCFO[]>(
     cliente.entregables || []
   )
@@ -35,7 +41,7 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
     cliente.socios.flatMap(s => s.certificados || [])
   )
 
-  // drag & drop state — per zona independiente
+  // drag & drop state — por zona independiente
   const [isDragOverDoc, setIsDragOverDoc] = useState<string | null>(null)
   const [dropFlashDoc, setDropFlashDoc] = useState<string | null>(null)
   const [isDragOverF29, setIsDragOverF29] = useState(false)
@@ -140,7 +146,6 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
   }
 
   const handleUploadEntregable = async (file: File) => {
-    if (!tipoEntregable) return
     setUploadingEntregable(true)
     const supabase = createClient()
     const path = `entregables/${cliente.id}/${anioFiscal}/${tipoEntregable.replace(/\s/g, '_')}_${Date.now()}.${file.name.split('.').pop()}`
@@ -181,6 +186,26 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
       await deleteEntregableCFO(id, cliente.id)
       setEntregables(prev => prev.filter(e => e.id !== id))
     })
+  }
+
+  // Confirmar subida F29 desde archivo en espera
+  const submitF29 = () => {
+    if (!pendingF29) return
+    handleUploadGeneric(pendingF29, F29_KEYS[selectedMesIdx], true)
+    setPendingF29(null)
+    setF29Error(null)
+  }
+
+  // Confirmar subida Entregable desde archivo en espera
+  const submitEntregable = () => {
+    if (!tipoEntregable) {
+      setEntregableError('Selecciona el tipo de documento antes de subir')
+      return
+    }
+    if (!pendingEntregable) return
+    handleUploadEntregable(pendingEntregable)
+    setPendingEntregable(null)
+    setEntregableError(null)
   }
 
   // helpers visuales para zonas de drop
@@ -350,63 +375,89 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
         </div>
 
         {canEdit && (
-          <div
-            className="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-6 flex gap-4 items-center"
-            style={dropZoneStyle(isDragOverF29, dropFlashF29)}
-            onDragEnter={(e) => { e.preventDefault(); setIsDragOverF29(true) }}
-            onDragLeave={(e) => {
-              e.preventDefault()
-              if (e.currentTarget.contains(e.relatedTarget as Node)) return
-              setIsDragOverF29(false)
-            }}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              e.preventDefault()
-              setIsDragOverF29(false)
-              const file = e.dataTransfer.files[0]
-              if (!file) return
-              setDropFlashF29(true)
-              setTimeout(() => { setDropFlashF29(false); handleUploadGeneric(file, F29_KEYS[selectedMesIdx], true) }, 200)
-            }}
-          >
-            {isDragOverF29 && <DropOverlay />}
-            <div className="w-48">
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Mes a declarar</label>
-              <select
-                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[13px] text-slate-900 outline-none font-medium"
-                value={selectedMesIdx} onChange={e => setSelectedMesIdx(Number(e.target.value))}
-              >
-                {MESES.map((m, i) => <option key={i} value={i}>{m}</option>)}
-              </select>
-            </div>
-
+          <>
             <div
-              onClick={() => f29InputRef.current?.click()}
-              className="flex-1 bg-white border border-dashed border-slate-300 rounded-lg h-14 flex items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-colors"
-            >
-              <span className="text-[13px] font-medium text-slate-500 flex items-center gap-2">
-                <FileText size={16} /> Seleccionar F29 (PDF)...
-              </span>
-            </div>
-
-            <button
-              className="bg-blue-600 hover:bg-blue-700 text-white h-14 px-6 rounded-lg font-semibold text-[13px] flex items-center gap-2 transition-colors disabled:opacity-50"
-              onClick={() => f29InputRef.current?.click()}
-              disabled={uploadingF29 !== null}
-            >
-              {uploadingF29 ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
-              Subir F29
-            </button>
-
-            <input
-              ref={f29InputRef} type="file" accept=".pdf" className="hidden"
-              onChange={e => {
-                const file = e.target.files?.[0]
-                if (file) handleUploadGeneric(file, F29_KEYS[selectedMesIdx], true)
-                e.target.value = ''
+              className="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-2 flex gap-4 items-center"
+              style={dropZoneStyle(isDragOverF29, dropFlashF29)}
+              onDragEnter={(e) => { e.preventDefault(); setIsDragOverF29(true) }}
+              onDragLeave={(e) => {
+                e.preventDefault()
+                if (e.currentTarget.contains(e.relatedTarget as Node)) return
+                setIsDragOverF29(false)
               }}
-            />
-          </div>
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault()
+                setIsDragOverF29(false)
+                const file = e.dataTransfer.files[0]
+                if (!file) return
+                setDropFlashF29(true)
+                setTimeout(() => {
+                  setDropFlashF29(false)
+                  setPendingF29(file)
+                  setF29Error(null)
+                }, 200)
+              }}
+            >
+              {isDragOverF29 && <DropOverlay />}
+              <div className="w-48 flex-shrink-0">
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Mes a declarar</label>
+                <select
+                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[13px] text-slate-900 outline-none font-medium"
+                  value={selectedMesIdx} onChange={e => setSelectedMesIdx(Number(e.target.value))}
+                >
+                  {MESES.map((m, i) => <option key={i} value={i}>{m}</option>)}
+                </select>
+              </div>
+
+              {/* Box del archivo — muestra nombre si está en espera, dashed si no */}
+              {pendingF29 ? (
+                <div className="flex-1 bg-green-50 border border-green-200 rounded-lg h-14 flex items-center justify-between px-4 gap-3">
+                  <span className="text-[13px] font-medium text-green-700 flex items-center gap-2 min-w-0">
+                    <FileText size={15} className="flex-shrink-0 text-green-600" />
+                    <span className="truncate">{pendingF29.name}</span>
+                  </span>
+                  <button
+                    onClick={() => { setPendingF29(null); setF29Error(null) }}
+                    className="flex-shrink-0 p-1 text-slate-400 hover:text-red-500 transition-colors"
+                    title="Quitar archivo"
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+              ) : (
+                <div
+                  onClick={() => f29InputRef.current?.click()}
+                  className="flex-1 bg-white border border-dashed border-slate-300 rounded-lg h-14 flex items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-colors"
+                >
+                  <span className="text-[13px] font-medium text-slate-500 flex items-center gap-2">
+                    <FileText size={16} /> Seleccionar F29 (PDF)…
+                  </span>
+                </div>
+              )}
+
+              <button
+                className="flex-shrink-0 bg-blue-600 hover:bg-blue-700 text-white h-14 px-6 rounded-lg font-semibold text-[13px] flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={submitF29}
+                disabled={uploadingF29 !== null || !pendingF29}
+              >
+                {uploadingF29 ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                Subir F29
+              </button>
+
+              <input
+                ref={f29InputRef} type="file" accept=".pdf" className="hidden"
+                onChange={e => {
+                  const file = e.target.files?.[0]
+                  if (file) { setPendingF29(file); setF29Error(null) }
+                  e.target.value = ''
+                }}
+              />
+            </div>
+            {f29Error && (
+              <p className="text-[12px] text-red-600 mb-4 px-1">{f29Error}</p>
+            )}
+          </>
         )}
 
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
@@ -523,64 +574,91 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
         </div>
 
         {canEdit && (
-          <div
-            className="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-6 flex gap-4 items-center"
-            style={dropZoneStyle(isDragOverEntregable, dropFlashEntregable)}
-            onDragEnter={(e) => { e.preventDefault(); setIsDragOverEntregable(true) }}
-            onDragLeave={(e) => {
-              e.preventDefault()
-              if (e.currentTarget.contains(e.relatedTarget as Node)) return
-              setIsDragOverEntregable(false)
-            }}
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              e.preventDefault()
-              setIsDragOverEntregable(false)
-              const file = e.dataTransfer.files[0]
-              if (!file) return
-              setDropFlashEntregable(true)
-              setTimeout(() => { setDropFlashEntregable(false); handleUploadEntregable(file) }, 200)
-            }}
-          >
-            {isDragOverEntregable && <DropOverlay />}
-            <div className="w-64">
-              <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Tipo de Documento</label>
-              <select
-                className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[13px] text-slate-900 outline-none font-medium"
-                value={tipoEntregable} onChange={e => setTipoEntregable(e.target.value)}
-              >
-                <option value="">Seleccionar tipo</option>
-                {TIPO_ENTREGABLE_OPTIONS.map((t, i) => <option key={i} value={t}>{t}</option>)}
-              </select>
-            </div>
-
+          <>
             <div
-              onClick={() => entregableRef.current?.click()}
-              className="flex-1 bg-white border border-dashed border-slate-300 rounded-lg h-14 flex items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-colors"
-            >
-              <span className="text-[13px] font-medium text-slate-500 flex items-center gap-2">
-                <FileText size={16} /> Seleccionar Archivo (PDF, Excel)...
-              </span>
-            </div>
-
-            <button
-              className="bg-blue-600 hover:bg-blue-700 text-white h-14 px-6 rounded-lg font-semibold text-[13px] flex items-center gap-2 transition-colors disabled:opacity-50"
-              onClick={() => entregableRef.current?.click()}
-              disabled={uploadingEntregable || !tipoEntregable}
-            >
-              {uploadingEntregable ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
-              Subir Entregable
-            </button>
-
-            <input
-              ref={entregableRef} type="file" accept=".pdf,.xlsx,.xls,.docx,.jpg,.jpeg,.png" className="hidden"
-              onChange={e => {
-                const file = e.target.files?.[0]
-                if (file) handleUploadEntregable(file)
-                e.target.value = ''
+              className="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-2 flex gap-4 items-center"
+              style={dropZoneStyle(isDragOverEntregable, dropFlashEntregable)}
+              onDragEnter={(e) => { e.preventDefault(); setIsDragOverEntregable(true) }}
+              onDragLeave={(e) => {
+                e.preventDefault()
+                if (e.currentTarget.contains(e.relatedTarget as Node)) return
+                setIsDragOverEntregable(false)
               }}
-            />
-          </div>
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault()
+                setIsDragOverEntregable(false)
+                const file = e.dataTransfer.files[0]
+                if (!file) return
+                setDropFlashEntregable(true)
+                setTimeout(() => {
+                  setDropFlashEntregable(false)
+                  setPendingEntregable(file)
+                  setEntregableError(null)
+                }, 200)
+              }}
+            >
+              {isDragOverEntregable && <DropOverlay />}
+              <div className="w-64 flex-shrink-0">
+                <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Tipo de Documento</label>
+                <select
+                  className="w-full bg-white border border-slate-200 rounded-lg px-3 py-2 text-[13px] text-slate-900 outline-none font-medium"
+                  value={tipoEntregable}
+                  onChange={e => { setTipoEntregable(e.target.value); setEntregableError(null) }}
+                >
+                  <option value="">Seleccionar tipo</option>
+                  {TIPO_ENTREGABLE_OPTIONS.map((t, i) => <option key={i} value={t}>{t}</option>)}
+                </select>
+              </div>
+
+              {/* Box del archivo — muestra nombre si está en espera, dashed si no */}
+              {pendingEntregable ? (
+                <div className="flex-1 bg-green-50 border border-green-200 rounded-lg h-14 flex items-center justify-between px-4 gap-3">
+                  <span className="text-[13px] font-medium text-green-700 flex items-center gap-2 min-w-0">
+                    <FileText size={15} className="flex-shrink-0 text-green-600" />
+                    <span className="truncate">{pendingEntregable.name}</span>
+                  </span>
+                  <button
+                    onClick={() => { setPendingEntregable(null); setEntregableError(null) }}
+                    className="flex-shrink-0 p-1 text-slate-400 hover:text-red-500 transition-colors"
+                    title="Quitar archivo"
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
+              ) : (
+                <div
+                  onClick={() => entregableRef.current?.click()}
+                  className="flex-1 bg-white border border-dashed border-slate-300 rounded-lg h-14 flex items-center justify-center cursor-pointer hover:border-blue-400 hover:bg-blue-50/30 transition-colors"
+                >
+                  <span className="text-[13px] font-medium text-slate-500 flex items-center gap-2">
+                    <FileText size={16} /> Seleccionar Archivo (PDF, Excel)…
+                  </span>
+                </div>
+              )}
+
+              <button
+                className="flex-shrink-0 bg-blue-600 hover:bg-blue-700 text-white h-14 px-6 rounded-lg font-semibold text-[13px] flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={submitEntregable}
+                disabled={uploadingEntregable || !pendingEntregable}
+              >
+                {uploadingEntregable ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                Subir Entregable
+              </button>
+
+              <input
+                ref={entregableRef} type="file" accept=".pdf,.xlsx,.xls,.docx,.jpg,.jpeg,.png" className="hidden"
+                onChange={e => {
+                  const file = e.target.files?.[0]
+                  if (file) { setPendingEntregable(file); setEntregableError(null) }
+                  e.target.value = ''
+                }}
+              />
+            </div>
+            {entregableError && (
+              <p className="text-[12px] text-red-600 mb-4 px-1">{entregableError}</p>
+            )}
+          </>
         )}
 
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm divide-y divide-slate-100">
