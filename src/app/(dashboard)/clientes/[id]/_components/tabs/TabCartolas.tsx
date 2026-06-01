@@ -22,10 +22,10 @@ export function TabCartolas({ cliente, role, anioFiscal }: Props) {
   const [dropFlash, setDropFlash] = useState(false)
   const [, startTransition] = useTransition()
   const fileRef = useRef<HTMLInputElement>(null)
-  const dragCountRef = useRef(0)
   const canEdit = role === 'admin' || role === 'master'
 
   const filtered = cartolas.filter(c => c.anio === anioFiscal)
+  const canReceiveDrop = canEdit && !uploading
 
   const handleUpload = async (file: File) => {
     if (!banco || !mes) { alert('Selecciona banco y mes'); return }
@@ -65,18 +65,16 @@ export function TabCartolas({ cliente, role, anioFiscal }: Props) {
     })
   }
 
-  const canReceiveDrop = canEdit && !uploading
   const handleDragEnter = (e: React.DragEvent) => {
     if (!canReceiveDrop) return
     e.preventDefault()
-    dragCountRef.current++
-    if (dragCountRef.current === 1) setIsDragOver(true)
+    setIsDragOver(true)
   }
   const handleDragLeave = (e: React.DragEvent) => {
     if (!canReceiveDrop) return
     e.preventDefault()
-    dragCountRef.current--
-    if (dragCountRef.current === 0) setIsDragOver(false)
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return
+    setIsDragOver(false)
   }
   const handleDragOver = (e: React.DragEvent) => {
     if (!canReceiveDrop) return
@@ -85,7 +83,6 @@ export function TabCartolas({ cliente, role, anioFiscal }: Props) {
   const handleDrop = (e: React.DragEvent) => {
     if (!canReceiveDrop) return
     e.preventDefault()
-    dragCountRef.current = 0
     setIsDragOver(false)
     const file = e.dataTransfer.files[0]
     if (!file) return

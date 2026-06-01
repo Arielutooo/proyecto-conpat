@@ -23,7 +23,6 @@ export function TabRRHH({ cliente, role, anioFiscal }: Props) {
   })
   const [isDragOverCat, setIsDragOverCat] = useState<Record<string, boolean>>({})
   const [dropFlashCat, setDropFlashCat] = useState<Record<string, boolean>>({})
-  const dragCountCatRef = useRef<Record<string, number>>({})
 
   const [, startTransition] = useTransition()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -102,7 +101,7 @@ export function TabRRHH({ cliente, role, anioFiscal }: Props) {
               <div className="px-5 py-4 flex items-center justify-between bg-slate-50/50 hover:bg-slate-50 cursor-pointer" onClick={() => toggleCategory(key)}>
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-500 shadow-sm">
-                     <FileText size={16} />
+                    <FileText size={16} />
                   </div>
                   <div>
                     <h3 className="text-[14px] font-bold text-slate-900">{label}</h3>
@@ -130,7 +129,7 @@ export function TabRRHH({ cliente, role, anioFiscal }: Props) {
                 </div>
               </div>
 
-              {/* Accordion Body */}
+              {/* Accordion Body — zona de drop */}
               {isOpen && (
                 <div
                   className="border-t border-slate-100 bg-white"
@@ -144,18 +143,16 @@ export function TabRRHH({ cliente, role, anioFiscal }: Props) {
                   }}
                   onDragEnter={canEdit ? (e) => {
                     e.preventDefault()
-                    dragCountCatRef.current[key] = (dragCountCatRef.current[key] ?? 0) + 1
-                    if (dragCountCatRef.current[key] === 1) setIsDragOverCat(p => ({ ...p, [key]: true }))
+                    setIsDragOverCat(p => ({ ...p, [key]: true }))
                   } : undefined}
                   onDragLeave={canEdit ? (e) => {
                     e.preventDefault()
-                    dragCountCatRef.current[key] = (dragCountCatRef.current[key] ?? 1) - 1
-                    if (dragCountCatRef.current[key] === 0) setIsDragOverCat(p => ({ ...p, [key]: false }))
+                    if (e.currentTarget.contains(e.relatedTarget as Node)) return
+                    setIsDragOverCat(p => ({ ...p, [key]: false }))
                   } : undefined}
                   onDragOver={canEdit ? (e) => { e.preventDefault() } : undefined}
                   onDrop={canEdit ? (e) => {
                     e.preventDefault()
-                    dragCountCatRef.current[key] = 0
                     setIsDragOverCat(p => ({ ...p, [key]: false }))
                     const file = e.dataTransfer.files[0]
                     if (!file) return
@@ -218,9 +215,9 @@ export function TabRRHH({ cliente, role, anioFiscal }: Props) {
       <input
         ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.png" className="hidden"
         onChange={e => {
-           const file = e.target.files?.[0]
-           if (file && pendingCategory.current) handleUpload(file, pendingCategory.current)
-           e.target.value = ''
+          const file = e.target.files?.[0]
+          if (file && pendingCategory.current) handleUpload(file, pendingCategory.current)
+          e.target.value = ''
         }}
       />
     </div>

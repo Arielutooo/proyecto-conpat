@@ -35,16 +35,13 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
     cliente.socios.flatMap(s => s.certificados || [])
   )
 
-  // drag & drop state
+  // drag & drop state — per zona independiente
   const [isDragOverDoc, setIsDragOverDoc] = useState<string | null>(null)
   const [dropFlashDoc, setDropFlashDoc] = useState<string | null>(null)
   const [isDragOverF29, setIsDragOverF29] = useState(false)
   const [dropFlashF29, setDropFlashF29] = useState(false)
   const [isDragOverEntregable, setIsDragOverEntregable] = useState(false)
   const [dropFlashEntregable, setDropFlashEntregable] = useState(false)
-  const dragCountDocRef = useRef<Record<string, number>>({})
-  const dragCountF29Ref = useRef(0)
-  const dragCountEntregableRef = useRef(0)
 
   const [, startTransition] = useTransition()
   const docInputRef = useRef<HTMLInputElement>(null)
@@ -186,6 +183,33 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
     })
   }
 
+  // helpers visuales para zonas de drop
+  const dropZoneStyle = (active: boolean, flash: boolean) => ({
+    position: 'relative' as const,
+    ...(flash
+      ? { border: '2px solid #16a34a', background: '#f0fdf4' }
+      : active
+      ? { border: '2px solid #C84632', background: 'rgba(200,70,50,0.05)' }
+      : {})
+  })
+
+  const DropOverlay = () => (
+    <div style={{
+      position: 'absolute', inset: 0, borderRadius: 12, zIndex: 10,
+      background: 'rgba(200,70,50,0.08)', display: 'flex', flexDirection: 'column',
+      alignItems: 'center', justifyContent: 'center', gap: 8, pointerEvents: 'none',
+    }}>
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
+        stroke="#C84632" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
+        <path d="M17 8l-5-5-5 5M12 3v12" />
+      </svg>
+      <span style={{ fontSize: 13, fontWeight: 700, color: '#C84632', letterSpacing: '0.01em' }}>
+        Suelta para subir
+      </span>
+    </div>
+  )
+
   return (
     <div className="max-w-4xl space-y-10">
       {/* Repositorio Tributario Anual */}
@@ -213,7 +237,7 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
             return (
               <div
                 key={key}
-                className="p-5 flex items-center gap-4 hover:bg-slate-50/50 transition-colors"
+                className="p-5 flex items-center gap-4 transition-colors"
                 style={{
                   position: 'relative',
                   ...(isRowFlash
@@ -224,18 +248,16 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
                 }}
                 onDragEnter={!doc && canEdit ? (e) => {
                   e.preventDefault()
-                  dragCountDocRef.current[key] = (dragCountDocRef.current[key] ?? 0) + 1
-                  if (dragCountDocRef.current[key] === 1) setIsDragOverDoc(key)
+                  setIsDragOverDoc(key)
                 } : undefined}
                 onDragLeave={!doc && canEdit ? (e) => {
                   e.preventDefault()
-                  dragCountDocRef.current[key] = (dragCountDocRef.current[key] ?? 1) - 1
-                  if (dragCountDocRef.current[key] === 0) setIsDragOverDoc(null)
+                  if (e.currentTarget.contains(e.relatedTarget as Node)) return
+                  setIsDragOverDoc(prev => prev === key ? null : prev)
                 } : undefined}
                 onDragOver={!doc && canEdit ? (e) => { e.preventDefault() } : undefined}
                 onDrop={!doc && canEdit ? (e) => {
                   e.preventDefault()
-                  dragCountDocRef.current[key] = 0
                   setIsDragOverDoc(null)
                   const file = e.dataTransfer.files[0]
                   if (!file) return
@@ -260,20 +282,20 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
                   </div>
                 )}
                 <div className={`w-10 h-10 rounded-lg flex-shrink-0 flex items-center justify-center ${doc ? 'bg-slate-50 border border-slate-200 text-slate-600' : 'bg-amber-50 border border-amber-100 text-amber-500'}`}>
-                   <FileText size={20} />
+                  <FileText size={20} />
                 </div>
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="text-[14px] font-bold text-slate-900">{label}</h3>
                     {doc ? (
-                       <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[#059669] bg-green-50 px-2 py-0.5 rounded-full">
-                         <CheckCircle2 size={12} /> Subido
-                       </span>
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-[#059669] bg-green-50 px-2 py-0.5 rounded-full">
+                        <CheckCircle2 size={12} /> Subido
+                      </span>
                     ) : (
-                       <span className="inline-flex items-center text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
-                         Pendiente
-                       </span>
+                      <span className="inline-flex items-center text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                        Pendiente
+                      </span>
                     )}
                   </div>
                   <p className="text-[12px] text-slate-500 truncate">
@@ -284,7 +306,7 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
                 <div className="flex items-center gap-3">
                   {doc ? (
                     <>
-                      <a href={doc.archivo_url} target="_blank" rel="noopener noreferrer" className="p-2 text-slate-400 hover:text-blue-600 transition-colors tooltip" title="Ver documento">
+                      <a href={doc.archivo_url} target="_blank" rel="noopener noreferrer" className="p-2 text-slate-400 hover:text-blue-600 transition-colors" title="Ver documento">
                         <Eye size={18} />
                       </a>
                       {canEdit && (
@@ -313,9 +335,9 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
         <input
           ref={docInputRef} type="file" accept=".pdf,.xls,.xlsx,.png,.jpg" className="hidden"
           onChange={e => {
-             const file = e.target.files?.[0]
-             if (file && pendingDocKey.current) handleUploadGeneric(file, pendingDocKey.current, false)
-             e.target.value = ''
+            const file = e.target.files?.[0]
+            if (file && pendingDocKey.current) handleUploadGeneric(file, pendingDocKey.current, false)
+            e.target.value = ''
           }}
         />
       </div>
@@ -330,20 +352,16 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
         {canEdit && (
           <div
             className="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-6 flex gap-4 items-center"
-            style={{
-              position: 'relative',
-              ...(dropFlashF29
-                ? { border: '2px solid #16a34a', background: '#f0fdf4' }
-                : isDragOverF29
-                ? { border: '2px solid #C84632', background: 'rgba(200,70,50,0.05)' }
-                : {})
+            style={dropZoneStyle(isDragOverF29, dropFlashF29)}
+            onDragEnter={(e) => { e.preventDefault(); setIsDragOverF29(true) }}
+            onDragLeave={(e) => {
+              e.preventDefault()
+              if (e.currentTarget.contains(e.relatedTarget as Node)) return
+              setIsDragOverF29(false)
             }}
-            onDragEnter={(e) => { e.preventDefault(); dragCountF29Ref.current++; if (dragCountF29Ref.current === 1) setIsDragOverF29(true) }}
-            onDragLeave={(e) => { e.preventDefault(); dragCountF29Ref.current--; if (dragCountF29Ref.current === 0) setIsDragOverF29(false) }}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => {
               e.preventDefault()
-              dragCountF29Ref.current = 0
               setIsDragOverF29(false)
               const file = e.dataTransfer.files[0]
               if (!file) return
@@ -351,22 +369,7 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
               setTimeout(() => { setDropFlashF29(false); handleUploadGeneric(file, F29_KEYS[selectedMesIdx], true) }, 200)
             }}
           >
-            {isDragOverF29 && (
-              <div style={{
-                position: 'absolute', inset: 0, borderRadius: 12, zIndex: 10,
-                background: 'rgba(200,70,50,0.08)', display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'center', gap: 8, pointerEvents: 'none',
-              }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-                  stroke="#C84632" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                  <path d="M17 8l-5-5-5 5M12 3v12" />
-                </svg>
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#C84632', letterSpacing: '0.01em' }}>
-                  Suelta para subir
-                </span>
-              </div>
-            )}
+            {isDragOverF29 && <DropOverlay />}
             <div className="w-48">
               <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Mes a declarar</label>
               <select
@@ -398,47 +401,47 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
             <input
               ref={f29InputRef} type="file" accept=".pdf" className="hidden"
               onChange={e => {
-                 const file = e.target.files?.[0]
-                 if (file) handleUploadGeneric(file, F29_KEYS[selectedMesIdx], true)
-                 e.target.value = ''
+                const file = e.target.files?.[0]
+                if (file) handleUploadGeneric(file, F29_KEYS[selectedMesIdx], true)
+                e.target.value = ''
               }}
             />
           </div>
         )}
 
         <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
-           {F29_KEYS.map((key, i) => {
-             const doc = getDoc(key)
-             if (!doc) return null
-             return (
-               <div key={key} className="px-5 py-4 flex items-center justify-between border-b border-slate-100 last:border-0 hover:bg-slate-50/50">
-                 <div className="flex items-center gap-3">
-                   <div className="w-8 h-8 rounded bg-green-50 text-green-600 flex items-center justify-center">
-                     <CheckCircle2 size={16} />
-                   </div>
-                   <div>
-                     <div className="font-bold text-[13px] text-slate-900">F29 {MESES[i]}</div>
-                     <div className="text-[12px] text-slate-500">{doc.archivo_nombre}</div>
-                   </div>
-                 </div>
-                 <div className="flex items-center gap-2">
-                    <a href={doc.archivo_url} target="_blank" rel="noopener noreferrer" className="text-[12px] font-semibold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors">
-                      Ver PDF
-                    </a>
-                    {canEdit && (
-                      <button onClick={() => handleDeleted(doc.id)} className="text-[12px] font-semibold text-red-500 bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors">
-                        Eliminar
-                      </button>
-                    )}
-                 </div>
-               </div>
-             )
-           })}
-           {F29_KEYS.every(k => !getDoc(k)) && (
-             <div className="p-8 text-center text-[13px] text-slate-400">
-               No hay declaraciones F29 subidas para el año {anioFiscal}.
-             </div>
-           )}
+          {F29_KEYS.map((key, i) => {
+            const doc = getDoc(key)
+            if (!doc) return null
+            return (
+              <div key={key} className="px-5 py-4 flex items-center justify-between border-b border-slate-100 last:border-0 hover:bg-slate-50/50">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded bg-green-50 text-green-600 flex items-center justify-center">
+                    <CheckCircle2 size={16} />
+                  </div>
+                  <div>
+                    <div className="font-bold text-[13px] text-slate-900">F29 {MESES[i]}</div>
+                    <div className="text-[12px] text-slate-500">{doc.archivo_nombre}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <a href={doc.archivo_url} target="_blank" rel="noopener noreferrer" className="text-[12px] font-semibold text-blue-600 bg-blue-50 px-3 py-1.5 rounded-lg hover:bg-blue-100 transition-colors">
+                    Ver PDF
+                  </a>
+                  {canEdit && (
+                    <button onClick={() => handleDeleted(doc.id)} className="text-[12px] font-semibold text-red-500 bg-red-50 px-3 py-1.5 rounded-lg hover:bg-red-100 transition-colors">
+                      Eliminar
+                    </button>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+          {F29_KEYS.every(k => !getDoc(k)) && (
+            <div className="p-8 text-center text-[13px] text-slate-400">
+              No hay declaraciones F29 subidas para el año {anioFiscal}.
+            </div>
+          )}
         </div>
       </div>
 
@@ -505,9 +508,9 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
         <input
           ref={certInputRef} type="file" accept=".pdf" className="hidden"
           onChange={e => {
-             const file = e.target.files?.[0]
-             if (file && pendingSocioId.current) handleUploadCertificado(file, pendingSocioId.current)
-             e.target.value = ''
+            const file = e.target.files?.[0]
+            if (file && pendingSocioId.current) handleUploadCertificado(file, pendingSocioId.current)
+            e.target.value = ''
           }}
         />
       </div>
@@ -522,20 +525,16 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
         {canEdit && (
           <div
             className="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-6 flex gap-4 items-center"
-            style={{
-              position: 'relative',
-              ...(dropFlashEntregable
-                ? { border: '2px solid #16a34a', background: '#f0fdf4' }
-                : isDragOverEntregable
-                ? { border: '2px solid #C84632', background: 'rgba(200,70,50,0.05)' }
-                : {})
+            style={dropZoneStyle(isDragOverEntregable, dropFlashEntregable)}
+            onDragEnter={(e) => { e.preventDefault(); setIsDragOverEntregable(true) }}
+            onDragLeave={(e) => {
+              e.preventDefault()
+              if (e.currentTarget.contains(e.relatedTarget as Node)) return
+              setIsDragOverEntregable(false)
             }}
-            onDragEnter={(e) => { e.preventDefault(); dragCountEntregableRef.current++; if (dragCountEntregableRef.current === 1) setIsDragOverEntregable(true) }}
-            onDragLeave={(e) => { e.preventDefault(); dragCountEntregableRef.current--; if (dragCountEntregableRef.current === 0) setIsDragOverEntregable(false) }}
             onDragOver={(e) => e.preventDefault()}
             onDrop={(e) => {
               e.preventDefault()
-              dragCountEntregableRef.current = 0
               setIsDragOverEntregable(false)
               const file = e.dataTransfer.files[0]
               if (!file) return
@@ -543,22 +542,7 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
               setTimeout(() => { setDropFlashEntregable(false); handleUploadEntregable(file) }, 200)
             }}
           >
-            {isDragOverEntregable && (
-              <div style={{
-                position: 'absolute', inset: 0, borderRadius: 12, zIndex: 10,
-                background: 'rgba(200,70,50,0.08)', display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'center', gap: 8, pointerEvents: 'none',
-              }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none"
-                  stroke="#C84632" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                  <path d="M17 8l-5-5-5 5M12 3v12" />
-                </svg>
-                <span style={{ fontSize: 13, fontWeight: 700, color: '#C84632', letterSpacing: '0.01em' }}>
-                  Suelta para subir
-                </span>
-              </div>
-            )}
+            {isDragOverEntregable && <DropOverlay />}
             <div className="w-64">
               <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-widest mb-2">Tipo de Documento</label>
               <select
@@ -591,9 +575,9 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
             <input
               ref={entregableRef} type="file" accept=".pdf,.xlsx,.xls,.docx,.jpg,.jpeg,.png" className="hidden"
               onChange={e => {
-                 const file = e.target.files?.[0]
-                 if (file) handleUploadEntregable(file)
-                 e.target.value = ''
+                const file = e.target.files?.[0]
+                if (file) handleUploadEntregable(file)
+                e.target.value = ''
               }}
             />
           </div>
