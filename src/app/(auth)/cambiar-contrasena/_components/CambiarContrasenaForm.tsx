@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 export function CambiarContrasenaForm() {
@@ -9,8 +8,6 @@ export function CambiarContrasenaForm() {
   const [confirm, setConfirm]     = useState('')
   const [error, setError]         = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
-  const router = useRouter()
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
@@ -34,8 +31,7 @@ export function CambiarContrasenaForm() {
         setError('No se pudo actualizar la contraseña. Intenta nuevamente.')
         return
       }
-      router.push('/clientes')
-      router.refresh()
+      window.location.href = '/clientes'
     })
   }
 

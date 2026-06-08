@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { checkLoginAttempts, recordFailedAttempt, resetAttempts } from '@/lib/actions/login-attempts'
 
@@ -14,8 +13,6 @@ export function LoginForm({ sessionExpired = false }: Props) {
   const [password, setPassword] = useState('')
   const [error, setError]       = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
-  const router = useRouter()
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
@@ -42,8 +39,7 @@ export function LoginForm({ sessionExpired = false }: Props) {
       await resetAttempts(email)
 
       const mustChange = data.user?.user_metadata?.must_change_password === true
-      router.push(mustChange ? '/cambiar-contrasena' : '/clientes')
-      router.refresh()
+      window.location.href = mustChange ? '/cambiar-contrasena' : '/clientes'
     })
   }
 
