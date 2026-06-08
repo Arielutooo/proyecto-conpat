@@ -35,8 +35,8 @@ export function LoginForm({ sessionExpired = false }: Props) {
         return
       }
 
-      // 3. Login exitoso: limpiar intentos
-      await resetAttempts(email)
+      // 3. Login exitoso: limpiar intentos (fire & forget — no bloquea la navegación)
+      resetAttempts(email).catch(() => {})
 
       const mustChange = data.user?.user_metadata?.must_change_password === true
       window.location.href = mustChange ? '/cambiar-contrasena' : '/clientes'
