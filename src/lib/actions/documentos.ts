@@ -45,6 +45,30 @@ export async function createDocumento(data: Omit<Documento, 'id' | 'created_at'>
   }
 }
 
+export async function updateDocumentoVigencia(
+  id: string,
+  clienteId: string,
+  validFrom: number | null,
+  validUntil: number | null,
+): Promise<ActionResult> {
+  try {
+    await requireAuth()
+    const supabase = await createClient()
+    const { error } = await supabase
+      .from('documentos')
+      .update({ valid_from: validFrom, valid_until: validUntil })
+      .eq('id', id)
+    if (error) {
+      console.error('[updateDocumentoVigencia] DB error:', error.message)
+      return { error: 'No se pudo actualizar la vigencia.' }
+    }
+    revalidatePath(`/clientes/${clienteId}`)
+    return {}
+  } catch (err) {
+    return handleActionError(err, 'updateDocumentoVigencia')
+  }
+}
+
 export async function deleteDocumento(id: string, clienteId: string): Promise<ActionResult> {
   try {
     await requireAdmin()

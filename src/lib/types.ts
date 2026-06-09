@@ -41,6 +41,7 @@ export interface Cliente {
   actividad_economica: string | null
   codigo_sii: string | null
   rentas_presuntas: boolean
+  anio_inicio: number | null
   created_at: string
 }
 
@@ -111,6 +112,8 @@ export interface Documento {
   anio: number | null
   archivo_url: string
   archivo_nombre: string | null
+  valid_from: number | null
+  valid_until: number | null
   created_at: string
 }
 

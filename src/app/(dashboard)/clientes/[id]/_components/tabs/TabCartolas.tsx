@@ -163,7 +163,7 @@ export function TabCartolas({ cliente, role, anioFiscal }: Props) {
           <input
             ref={fileRef}
             type="file"
-            accept=".pdf,.xlsx,.xls,.jpg,.jpeg,.png"
+            accept="*"
             className="hidden"
             onChange={e => e.target.files?.[0] && handleUpload(e.target.files[0])}
           />

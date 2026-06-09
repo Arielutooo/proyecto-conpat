@@ -41,6 +41,7 @@ export function EditarFichaDrawer({ cliente, open, onClose }: Props) {
     codigo_sii: cliente.codigo_sii ?? '',
     iniciacion_actividades: cliente.iniciacion_actividades,
     rentas_presuntas: cliente.rentas_presuntas,
+    anio_inicio: String(cliente.anio_inicio ?? 2020),
   })
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -63,6 +64,7 @@ export function EditarFichaDrawer({ cliente, open, onClose }: Props) {
         codigo_sii: form.codigo_sii || null,
         iniciacion_actividades: form.iniciacion_actividades,
         rentas_presuntas: form.rentas_presuntas,
+        anio_inicio: form.anio_inicio ? Number(form.anio_inicio) : null,
       })
       if (result.error) { setError(result.error); return }
       onClose()
@@ -97,6 +99,17 @@ export function EditarFichaDrawer({ cliente, open, onClose }: Props) {
               </Field>
               <Field label="RUT">
                 <input className={inputCls} value={form.rut} onChange={e => set('rut', e.target.value)} />
+              </Field>
+              <Field label="Cliente desde (año)">
+                <input
+                  type="number"
+                  className={inputCls}
+                  value={form.anio_inicio}
+                  onChange={e => set('anio_inicio', e.target.value)}
+                  placeholder="2020"
+                  min={2000}
+                  max={new Date().getFullYear()}
+                />
               </Field>
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Tipo de Sociedad">

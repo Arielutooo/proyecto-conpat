@@ -358,7 +358,7 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
           })}
         </div>
         <input
-          ref={docInputRef} type="file" accept=".pdf,.xls,.xlsx,.png,.jpg" className="hidden"
+          ref={docInputRef} type="file" accept="*" className="hidden"
           onChange={e => {
             const file = e.target.files?.[0]
             if (file && pendingDocKey.current) handleUploadGeneric(file, pendingDocKey.current, false)
@@ -446,7 +446,7 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
               </button>
 
               <input
-                ref={f29InputRef} type="file" accept=".pdf" className="hidden"
+                ref={f29InputRef} type="file" accept="*" className="hidden"
                 onChange={e => {
                   const file = e.target.files?.[0]
                   if (file) { setPendingF29(file); setF29Error(null) }
@@ -557,7 +557,7 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
         </div>
 
         <input
-          ref={certInputRef} type="file" accept=".pdf" className="hidden"
+          ref={certInputRef} type="file" accept="*" className="hidden"
           onChange={e => {
             const file = e.target.files?.[0]
             if (file && pendingSocioId.current) handleUploadCertificado(file, pendingSocioId.current)
@@ -647,7 +647,7 @@ export function TabTributario({ cliente, role, anioFiscal }: Props) {
               </button>
 
               <input
-                ref={entregableRef} type="file" accept=".pdf,.xlsx,.xls,.docx,.jpg,.jpeg,.png" className="hidden"
+                ref={entregableRef} type="file" accept="*" className="hidden"
                 onChange={e => {
                   const file = e.target.files?.[0]
                   if (file) { setPendingEntregable(file); setEntregableError(null) }

@@ -13,7 +13,7 @@ import { TabInversiones } from './tabs/TabInversiones'
 import { TabTributario } from './tabs/TabTributario'
 import { TabRRHH } from './tabs/TabRRHH'
 import { ChevronLeft, ChevronRight, Download } from 'lucide-react'
-import { useAnoFiscal, ANOS_FISCALES } from '@/lib/contexts/ano-fiscal'
+import { useAnoFiscal } from '@/lib/contexts/ano-fiscal'
 import { getSociedadColor } from '@/lib/helpers'
 import type { ClienteConRelaciones, Role } from '@/lib/types'
 
@@ -53,6 +53,13 @@ export function ClienteDetail({ cliente, role }: Props) {
   const { anioFiscal, setAnioFiscal } = useAnoFiscal()
   const color = getSociedadColor(cliente.tipo_sociedad)
   const bc    = BADGE_COLORS[color] ?? BADGE_COLORS.slate
+
+  const currentYear   = new Date().getFullYear()
+  const anioInicio    = cliente.anio_inicio ?? 2020
+  const anosDisponibles = Array.from(
+    { length: currentYear - anioInicio + 1 },
+    (_, i) => currentYear - i
+  )
 
   return (
     <Tabs.Root value={tab} onValueChange={setTab} className="h-full flex flex-col">
@@ -112,11 +119,11 @@ export function ClienteDetail({ cliente, role }: Props) {
                 onChange={e => setAnioFiscal(Number(e.target.value))}
                 style={{ border: '1px solid #e2e8f0', borderRadius: 8, padding: '7px 28px 7px 12px', fontSize: 13, fontWeight: 600, color: '#0f172a', outline: 'none', background: 'white', cursor: 'pointer', appearance: 'none', backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\")", backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center' }}
               >
-                {ANOS_FISCALES.map(y => <option key={y} value={y}>{y}</option>)}
+                {anosDisponibles.map(y => <option key={y} value={y}>{y}</option>)}
               </select>
             </div>
 
-            {role === 'admin' && EDITABLE_TABS.includes(tab) && (
+            {(role === 'admin' || role === 'master') && EDITABLE_TABS.includes(tab) && (
               <button
                 onClick={() => setDrawerOpen(tab as any)}
                 style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '9px 20px', borderRadius: 9, border: 'none', background: '#0f172a', color: 'white', cursor: 'pointer', fontSize: 13, fontWeight: 600, boxShadow: '0 1px 4px rgba(0,0,0,0.2)', transition: 'opacity .15s' }}
@@ -186,13 +193,13 @@ export function ClienteDetail({ cliente, role }: Props) {
         </Tabs.Content>
       </div>
 
-      {role === 'admin' && drawerOpen === 'legales' && (
+      {(role === 'admin' || role === 'master') && drawerOpen === 'legales' && (
         <EditarFichaDrawer cliente={cliente} open={true} onClose={() => setDrawerOpen(null)} />
       )}
-      {role === 'admin' && drawerOpen === 'socios' && (
+      {(role === 'admin' || role === 'master') && drawerOpen === 'socios' && (
         <EditarSociosDrawer cliente={cliente} open={true} onClose={() => setDrawerOpen(null)} />
       )}
-      {role === 'admin' && drawerOpen === 'inversiones' && (
+      {(role === 'admin' || role === 'master') && drawerOpen === 'inversiones' && (
         <EditarInversionesDrawer cliente={cliente} open={true} anioFiscal={anioFiscal} onClose={() => setDrawerOpen(null)} />
       )}
     </Tabs.Root>

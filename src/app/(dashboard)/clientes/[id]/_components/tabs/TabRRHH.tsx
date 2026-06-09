@@ -213,7 +213,7 @@ export function TabRRHH({ cliente, role, anioFiscal }: Props) {
       </div>
 
       <input
-        ref={fileInputRef} type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.png" className="hidden"
+        ref={fileInputRef} type="file" accept="*" className="hidden"
         onChange={e => {
           const file = e.target.files?.[0]
           if (file && pendingCategory.current) handleUpload(file, pendingCategory.current)
