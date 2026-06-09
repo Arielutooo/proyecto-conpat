@@ -174,12 +174,19 @@ export function TabLegales({ cliente, role, anioFiscal }: Props) {
   const canEdit = role === 'admin' || role === 'master'
 
   const getDoc = (tipo: string) => {
-    const doc = docs.find(d => d.tipo_documento === tipo)
-    if (!doc) return undefined
-    if (!doc.valid_from && !doc.valid_until) return doc
-    const from  = doc.valid_from  ?? -Infinity
-    const until = doc.valid_until ?? Infinity
-    return anioFiscal >= from && anioFiscal <= until ? doc : undefined
+    const all = docs.filter(d => d.tipo_documento === tipo)
+    if (all.length === 0) return undefined
+    const candidates = all.filter(d => {
+      if (!d.valid_from && !d.valid_until) return true
+      const from  = d.valid_from  ?? -Infinity
+      const until = d.valid_until ?? Infinity
+      return anioFiscal >= from && anioFiscal <= until
+    })
+    if (candidates.length === 0) return undefined
+    // Si hay overlap, preferir la versión con valid_from más reciente
+    return candidates.reduce((best, d) =>
+      (d.valid_from ?? -Infinity) > (best.valid_from ?? -Infinity) ? d : best
+    )
   }
 
   const handleUploaded = (tipo: string, url: string, nombre: string) => {
@@ -190,15 +197,12 @@ export function TabLegales({ cliente, role, anioFiscal }: Props) {
         valid_from: null, valid_until: null,
       })
       if (result.id) {
-        setDocs(prev => {
-          const without = prev.filter(d => d.tipo_documento !== tipo)
-          return [...without, {
-            id: result.id!, cliente_id: cliente.id, categoria: 'legal',
-            tipo_documento: tipo, anio: null, archivo_url: url,
-            archivo_nombre: nombre, valid_from: null, valid_until: null,
-            created_at: new Date().toISOString(),
-          }]
-        })
+        setDocs(prev => [...prev, {
+          id: result.id!, cliente_id: cliente.id, categoria: 'legal',
+          tipo_documento: tipo, anio: null, archivo_url: url,
+          archivo_nombre: nombre,
+          created_at: new Date().toISOString(),
+        }])
       }
     })
   }
