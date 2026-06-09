@@ -112,8 +112,8 @@ export interface Documento {
   anio: number | null
   archivo_url: string
   archivo_nombre: string | null
-  valid_from: number | null
-  valid_until: number | null
+  valid_from?: number | null
+  valid_until?: number | null
   created_at: string
 }
 
