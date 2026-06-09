@@ -173,7 +173,14 @@ export function TabLegales({ cliente, role, anioFiscal }: Props) {
   const [vigenciaDoc, setVigenciaDoc] = useState<Documento | null>(null)
   const canEdit = role === 'admin' || role === 'master'
 
-  const getDoc = (tipo: string) => docs.find(d => d.tipo_documento === tipo)
+  const getDoc = (tipo: string) => {
+    const doc = docs.find(d => d.tipo_documento === tipo)
+    if (!doc) return undefined
+    if (!doc.valid_from && !doc.valid_until) return doc
+    const from  = doc.valid_from  ?? -Infinity
+    const until = doc.valid_until ?? Infinity
+    return anioFiscal >= from && anioFiscal <= until ? doc : undefined
+  }
 
   const handleUploaded = (tipo: string, url: string, nombre: string) => {
     startTransition(async () => {
