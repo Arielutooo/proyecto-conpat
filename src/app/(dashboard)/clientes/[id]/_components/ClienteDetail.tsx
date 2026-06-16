@@ -55,7 +55,9 @@ export function ClienteDetail({ cliente, role }: Props) {
   const bc    = BADGE_COLORS[color] ?? BADGE_COLORS.slate
 
   const currentYear   = new Date().getFullYear()
-  const anioInicio    = cliente.anio_inicio ?? 2020
+  const anioInicio    = cliente.fecha_constitucion
+    ? new Date(cliente.fecha_constitucion).getFullYear()
+    : (cliente.anio_inicio ?? 2020)
   const anosDisponibles = Array.from(
     { length: currentYear - anioInicio + 1 },
     (_, i) => currentYear - i

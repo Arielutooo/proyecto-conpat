@@ -42,6 +42,7 @@ export interface Cliente {
   codigo_sii: string | null
   rentas_presuntas: boolean
   anio_inicio?: number | null
+  fecha_constitucion?: string | null
   created_at: string
 }
 
@@ -114,6 +115,7 @@ export interface Documento {
   archivo_nombre: string | null
   valid_from?: number | null
   valid_until?: number | null
+  nota?: string | null
   created_at: string
 }
 
@@ -131,12 +133,25 @@ export interface SocioConRelaciones extends Socio {
   certificados: CertificadoRetiroAnual[]
 }
 
+export interface CartolaInversion {
+  id: string
+  inversion_id: string
+  cliente_id: string
+  anio: number
+  mes: number
+  comentario: string | null
+  archivo_url: string
+  archivo_nombre: string
+  created_at: string
+}
+
 export interface ClienteConRelaciones extends Cliente {
   socios: SocioConRelaciones[]
   inversiones: Inversion[]
   cartolas: CartolaMensual[]
   documentos: Documento[]
   entregables: EntregableCFO[]
+  cartolas_inversion: CartolaInversion[]
 }
 
 export interface ClienteConStats extends Cliente {

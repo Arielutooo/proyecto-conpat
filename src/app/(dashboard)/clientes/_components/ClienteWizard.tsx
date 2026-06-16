@@ -16,7 +16,7 @@ type Step = 1 | 2 | 3
 
 const INITIAL = {
   razon_social: '', rut: '', tipo_sociedad: '', regimen_tributario: '',
-  representante_legal: '', metodo_creacion: '',
+  representante_legal: '', metodo_creacion: '', fecha_constitucion: '',
   conpat_factura: false, moneda_facturacion: 'CLP' as 'CLP' | 'UF', cantidad_facturacion: '',
   tiene_nomina: false, emite_facturas: false, boletas_honorarios: false,
 }
@@ -49,6 +49,7 @@ export function ClienteWizard({ open, onClose }: Props) {
     startTransition(async () => {
       const result = await createCliente({
         ...form,
+        fecha_constitucion: form.fecha_constitucion || null,
         cantidad_facturacion: form.cantidad_facturacion ? Number(form.cantidad_facturacion) : null,
         sin_inversiones: false,
         cantidad_trabajadores: 0,
@@ -122,6 +123,9 @@ export function ClienteWizard({ open, onClose }: Props) {
                 </WizardField>
                 <WizardField label="Método de Constitución">
                   <input className={inputCls} value={form.metodo_creacion} onChange={e => set('metodo_creacion', e.target.value)} placeholder="Ej. Notaría Pública" />
+                </WizardField>
+                <WizardField label="Fecha de Constitución">
+                  <input type="date" className={inputCls} value={form.fecha_constitucion} onChange={e => set('fecha_constitucion', e.target.value)} />
                 </WizardField>
                 <div className="border border-slate-200 rounded-xl p-4 space-y-3">
                   <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">Facturación Conpat</p>

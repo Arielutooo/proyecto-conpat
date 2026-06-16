@@ -69,7 +69,8 @@ export async function getClienteConRelaciones(id: string): Promise<ClienteConRel
       inversiones (*),
       cartolas:cartolas_mensuales (*),
       documentos (*),
-      entregables:entregables_cfo (*)
+      entregables:entregables_cfo (*),
+      cartolas_inversion (*)
     `)
     .eq('id', id)
     .single()

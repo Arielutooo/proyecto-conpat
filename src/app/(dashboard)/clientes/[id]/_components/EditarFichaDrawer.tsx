@@ -42,6 +42,7 @@ export function EditarFichaDrawer({ cliente, open, onClose }: Props) {
     iniciacion_actividades: cliente.iniciacion_actividades,
     rentas_presuntas: cliente.rentas_presuntas,
     anio_inicio: String(cliente.anio_inicio ?? 2020),
+    fecha_constitucion: cliente.fecha_constitucion ?? '',
   })
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
@@ -65,6 +66,7 @@ export function EditarFichaDrawer({ cliente, open, onClose }: Props) {
         iniciacion_actividades: form.iniciacion_actividades,
         rentas_presuntas: form.rentas_presuntas,
         anio_inicio: form.anio_inicio ? Number(form.anio_inicio) : null,
+        fecha_constitucion: form.fecha_constitucion || null,
       })
       if (result.error) { setError(result.error); return }
       onClose()
@@ -99,6 +101,14 @@ export function EditarFichaDrawer({ cliente, open, onClose }: Props) {
               </Field>
               <Field label="RUT">
                 <input className={inputCls} value={form.rut} onChange={e => set('rut', e.target.value)} />
+              </Field>
+              <Field label="Fecha de Constitución">
+                <input
+                  type="date"
+                  className={inputCls}
+                  value={form.fecha_constitucion}
+                  onChange={e => set('fecha_constitucion', e.target.value)}
+                />
               </Field>
               <Field label="Cliente desde (año)">
                 <input
