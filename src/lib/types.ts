@@ -43,7 +43,6 @@ export interface Cliente {
   rentas_presuntas: boolean
   anio_inicio?: number | null
   fecha_constitucion?: string | null
-  sin_rrhh?: boolean | null
   created_at: string
 }
 
