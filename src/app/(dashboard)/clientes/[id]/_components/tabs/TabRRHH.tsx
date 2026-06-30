@@ -3,6 +3,7 @@
 import { useState, useTransition, useRef } from 'react'
 import { Plus, Trash2, Eye, FileText, ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
 import { createDocumento, deleteDocumento } from '@/lib/actions/documentos'
+import { updateCliente } from '@/lib/actions/clientes'
 import { createClient } from '@/lib/supabase/client'
 import { DOCS_RRHH } from '@/lib/helpers'
 import type { ClienteConRelaciones, Documento, Role } from '@/lib/types'
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export function TabRRHH({ cliente, role, anioFiscal }: Props) {
+  const [sinRRHH, setSinRRHH] = useState(cliente.sin_rrhh ?? false)
   const [docs, setDocs] = useState<Documento[]>(
     cliente.documentos.filter(d => d.categoria === 'rrhh')
   )
@@ -29,6 +31,14 @@ export function TabRRHH({ cliente, role, anioFiscal }: Props) {
   const pendingCategory = useRef<string | null>(null)
 
   const canEdit = role === 'admin' || role === 'master'
+
+  const toggleSinRRHH = () => {
+    const next = !sinRRHH
+    setSinRRHH(next)
+    startTransition(async () => {
+      await updateCliente(cliente.id, { sin_rrhh: next })
+    })
+  }
 
   const toggleCategory = (key: string) => {
     setOpenCategories(p => ({ ...p, [key]: !p[key] }))
@@ -76,6 +86,30 @@ export function TabRRHH({ cliente, role, anioFiscal }: Props) {
 
   return (
     <div className="max-w-4xl space-y-6">
+      {/* Toggle sin RRHH */}
+      <div className="bg-white rounded-xl border border-slate-200 p-5 flex items-center justify-between shadow-sm">
+        <div>
+          <h3 className="font-bold text-[14px] text-slate-900">Este cliente no maneja RRHH</h3>
+          <p className="text-[12px] text-slate-500 mt-0.5">Oculta las secciones de documentos de trabajadores</p>
+        </div>
+        <div
+          onClick={canEdit ? toggleSinRRHH : undefined}
+          className={`w-12 h-7 rounded-full relative transition-colors ${canEdit ? 'cursor-pointer' : ''} ${sinRRHH ? 'bg-blue-600' : 'bg-slate-200'}`}
+        >
+          <div className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all shadow ${sinRRHH ? 'left-6' : 'left-1'}`} />
+        </div>
+      </div>
+
+      {sinRRHH ? (
+        <div className="bg-white rounded-xl border border-slate-200 p-10 text-center shadow-sm">
+          <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-3">
+            <FileText size={22} className="text-slate-400" />
+          </div>
+          <h3 className="text-[15px] font-bold text-slate-700 mb-1">Este cliente no maneja trabajadores</h3>
+          <p className="text-[13px] text-slate-400">Activa el módulo RRHH con el toggle de arriba para gestionar documentos laborales.</p>
+        </div>
+      ) : (
+        <>
       <div className="mb-6">
         <h2 className="text-[16px] font-bold text-slate-900">Documentos RRHH — Período Fiscal {anioFiscal}</h2>
         <p className="text-[13px] text-slate-500 mt-1">Nómina, contratos y comprobantes laborales.</p>
@@ -220,6 +254,8 @@ export function TabRRHH({ cliente, role, anioFiscal }: Props) {
           e.target.value = ''
         }}
       />
+        </>
+      )}
     </div>
   )
 }
